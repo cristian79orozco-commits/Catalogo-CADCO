@@ -76,19 +76,6 @@ function saveSnapshot(snapshot: PersistedSnapshot) {
   }
 }
 
-let brandSyncTimer: ReturnType<typeof setTimeout> | null = null;
-function scheduleBrandSync(fn: () => void) {
-  if (brandSyncTimer) clearTimeout(brandSyncTimer);
-  brandSyncTimer = setTimeout(fn, 500);
-}
-
-const trackSyncTimers = new Map<string, ReturnType<typeof setTimeout>>();
-function scheduleTrackSync(code: string, fn: () => void) {
-  const prev = trackSyncTimers.get(code);
-  if (prev) clearTimeout(prev);
-  trackSyncTimers.set(code, setTimeout(fn, 500));
-}
-
 function updateUrlProjectParam(projectId: string | null) {
   try {
     const url = new URL(window.location.href);
@@ -201,14 +188,18 @@ interface CatalogState extends PersistedSnapshot {
   publishLiveToGitHub: () => Promise<void>;
   syncLocalToSupabase: () => Promise<void>;
 
-  addProject: (project: CatalogProject) => void;
-  updateProject: (project: CatalogProject) => void;
-  deleteProject: (projectId: string) => void;
-  addCertificate: (cert: DigitalCertificate) => void;
-  updateCertificate: (cert: DigitalCertificate) => void;
-  deleteCertificate: (certId: string) => void;
-  updateBrandConfig: (patch: Partial<BrandConfig>) => void;
-  updateTrainingTrack: (track: CertificationTrack) => void;
+  addProject: (project: CatalogProject) => Promise<void>;
+  updateProject: (project: CatalogProject) => Promise<void>;
+  deleteProject: (projectId: string) => Promise<void>;
+  addCertificate: (cert: DigitalCertificate) => Promise<void>;
+  updateCertificate: (cert: DigitalCertificate) => Promise<void>;
+  deleteCertificate: (certId: string) => Promise<void>;
+  updateBrandConfig: (patch: Partial<BrandConfig>) => Promise<void>;
+  updateTrainingTrack: (track: CertificationTrack) => Promise<void>;
+  saveBrandAndTraining: (
+    brandConfig: BrandConfig,
+    trainingTracks: CertificationTrack[]
+  ) => Promise<void>;
   importSnapshot: (snapshot: Partial<PersistedSnapshot>) => void;
   resetToDefaults: () => void;
 }
@@ -357,6 +348,8 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
   subscribeRealtime: () => {
     if (!isSupabaseConfigured) return () => {};
     return subscribeToCatalogRealtime(() => {
+      // Never overwrite local state while Admin Studio is open to prevent clobbering active edits
+      if (get().isAdminOpen) return;
       void get().fetchLiveCatalog({ force: true });
     });
   },
@@ -480,7 +473,7 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
     );
   },
 
-  addProject: (project) => {
+  addProject: async (project) => {
     const projects = [project, ...get().projects];
     const s = get();
     saveSnapshot({
@@ -491,16 +484,18 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
     });
     set({ projects, syncError: null });
     if (isSupabaseConfigured) {
-      void upsertProjectInSupabase(project, 0).catch((err) => {
-        set({
-          syncError:
-            err instanceof Error ? err.message : 'Error al guardar proyecto en Supabase.',
-        });
-      });
+      try {
+        await upsertProjectInSupabase(project, 0);
+      } catch (err) {
+        const msg =
+          err instanceof Error ? err.message : 'Error al guardar proyecto en Supabase.';
+        set({ syncError: msg });
+        throw new Error(msg);
+      }
     }
   },
 
-  updateProject: (project) => {
+  updateProject: async (project) => {
     const projects = get().projects.map((p) => (p.id === project.id ? project : p));
     const sortOrder = Math.max(
       0,
@@ -515,16 +510,18 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
     });
     set({ projects, syncError: null });
     if (isSupabaseConfigured) {
-      void upsertProjectInSupabase(project, sortOrder).catch((err) => {
-        set({
-          syncError:
-            err instanceof Error ? err.message : 'Error al actualizar proyecto en Supabase.',
-        });
-      });
+      try {
+        await upsertProjectInSupabase(project, sortOrder);
+      } catch (err) {
+        const msg =
+          err instanceof Error ? err.message : 'Error al actualizar proyecto en Supabase.';
+        set({ syncError: msg });
+        throw new Error(msg);
+      }
     }
   },
 
-  deleteProject: (projectId) => {
+  deleteProject: async (projectId) => {
     const projects = get().projects.filter((p) => p.id !== projectId);
     const s = get();
     saveSnapshot({
@@ -535,16 +532,18 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
     });
     set({ projects, syncError: null });
     if (isSupabaseConfigured) {
-      void deleteProjectInSupabase(projectId).catch((err) => {
-        set({
-          syncError:
-            err instanceof Error ? err.message : 'Error al eliminar proyecto en Supabase.',
-        });
-      });
+      try {
+        await deleteProjectInSupabase(projectId);
+      } catch (err) {
+        const msg =
+          err instanceof Error ? err.message : 'Error al eliminar proyecto en Supabase.';
+        set({ syncError: msg });
+        throw new Error(msg);
+      }
     }
   },
 
-  addCertificate: (cert) => {
+  addCertificate: async (cert) => {
     const certificates = [cert, ...get().certificates];
     const s = get();
     saveSnapshot({
@@ -555,16 +554,18 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
     });
     set({ certificates, syncError: null });
     if (isSupabaseConfigured) {
-      void upsertCertificateInSupabase(cert, 0).catch((err) => {
-        set({
-          syncError:
-            err instanceof Error ? err.message : 'Error al guardar certificado en Supabase.',
-        });
-      });
+      try {
+        await upsertCertificateInSupabase(cert, 0);
+      } catch (err) {
+        const msg =
+          err instanceof Error ? err.message : 'Error al guardar certificado en Supabase.';
+        set({ syncError: msg });
+        throw new Error(msg);
+      }
     }
   },
 
-  updateCertificate: (cert) => {
+  updateCertificate: async (cert) => {
     const certificates = get().certificates.map((c) => (c.id === cert.id ? cert : c));
     const sortOrder = Math.max(
       0,
@@ -579,16 +580,18 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
     });
     set({ certificates, syncError: null });
     if (isSupabaseConfigured) {
-      void upsertCertificateInSupabase(cert, sortOrder).catch((err) => {
-        set({
-          syncError:
-            err instanceof Error ? err.message : 'Error al actualizar certificado en Supabase.',
-        });
-      });
+      try {
+        await upsertCertificateInSupabase(cert, sortOrder);
+      } catch (err) {
+        const msg =
+          err instanceof Error ? err.message : 'Error al actualizar certificado en Supabase.';
+        set({ syncError: msg });
+        throw new Error(msg);
+      }
     }
   },
 
-  deleteCertificate: (certId) => {
+  deleteCertificate: async (certId) => {
     const certificates = get().certificates.filter((c) => c.id !== certId);
     const s = get();
     saveSnapshot({
@@ -599,16 +602,18 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
     });
     set({ certificates, syncError: null });
     if (isSupabaseConfigured) {
-      void deleteCertificateInSupabase(certId).catch((err) => {
-        set({
-          syncError:
-            err instanceof Error ? err.message : 'Error al eliminar certificado en Supabase.',
-        });
-      });
+      try {
+        await deleteCertificateInSupabase(certId);
+      } catch (err) {
+        const msg =
+          err instanceof Error ? err.message : 'Error al eliminar certificado en Supabase.';
+        set({ syncError: msg });
+        throw new Error(msg);
+      }
     }
   },
 
-  updateBrandConfig: (patch) => {
+  updateBrandConfig: async (patch) => {
     const brandConfig = { ...get().brandConfig, ...patch };
     const s = get();
     saveSnapshot({
@@ -619,18 +624,18 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
     });
     set({ brandConfig, syncError: null });
     if (isSupabaseConfigured) {
-      scheduleBrandSync(() => {
-        void upsertBrandConfigInSupabase(get().brandConfig).catch((err) => {
-          set({
-            syncError:
-              err instanceof Error ? err.message : 'Error al guardar configuración en Supabase.',
-          });
-        });
-      });
+      try {
+        await upsertBrandConfigInSupabase(brandConfig);
+      } catch (err) {
+        const msg =
+          err instanceof Error ? err.message : 'Error al guardar configuración en Supabase.';
+        set({ syncError: msg });
+        throw new Error(msg);
+      }
     }
   },
 
-  updateTrainingTrack: (track) => {
+  updateTrainingTrack: async (track) => {
     const trainingTracks = get().trainingTracks.map((t) =>
       t.code === track.code ? track : t
     );
@@ -643,16 +648,40 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
     });
     set({ trainingTracks, syncError: null });
     if (isSupabaseConfigured) {
-      scheduleTrackSync(track.code, () => {
-        const latest = get().trainingTracks.find((t) => t.code === track.code);
-        if (!latest) return;
-        void upsertTrainingTrackInSupabase(latest).catch((err) => {
-          set({
-            syncError:
-              err instanceof Error ? err.message : 'Error al guardar capacitación en Supabase.',
-          });
-        });
-      });
+      try {
+        await upsertTrainingTrackInSupabase(track);
+      } catch (err) {
+        const msg =
+          err instanceof Error ? err.message : 'Error al guardar capacitación en Supabase.';
+        set({ syncError: msg });
+        throw new Error(msg);
+      }
+    }
+  },
+
+  saveBrandAndTraining: async (brandConfig, trainingTracks) => {
+    const s = get();
+    saveSnapshot({
+      projects: s.projects,
+      certificates: s.certificates,
+      trainingTracks,
+      brandConfig,
+    });
+    set({ brandConfig, trainingTracks, syncError: null });
+    if (isSupabaseConfigured) {
+      try {
+        await Promise.all([
+          upsertBrandConfigInSupabase(brandConfig),
+          ...trainingTracks.map((track) => upsertTrainingTrackInSupabase(track)),
+        ]);
+      } catch (err) {
+        const msg =
+          err instanceof Error
+            ? err.message
+            : 'Error al guardar marca y capacitación en Supabase.';
+        set({ syncError: msg });
+        throw new Error(msg);
+      }
     }
   },
 

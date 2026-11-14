@@ -1,5 +1,6 @@
 import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { Toaster } from 'sonner';
 import {
   Award,
   Box,
@@ -397,7 +398,9 @@ export function App() {
                   <div className="relative w-full sm:w-72">
                     <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                     <input
-                      type="text"
+                      type="search"
+                      name="catalog-search"
+                      autoComplete="off"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Buscar trabajo, código, norma..."
@@ -485,6 +488,17 @@ export function App() {
         )}
         <AdminStudioModal />
       </Suspense>
+      <Toaster
+        position="bottom-right"
+        theme="dark"
+        toastOptions={{
+          style: {
+            background: '#0b0e13',
+            border: '1px solid rgba(91, 181, 185, 0.35)',
+            color: '#f1f5f9',
+          },
+        }}
+      />
     </div>
   );
 }
