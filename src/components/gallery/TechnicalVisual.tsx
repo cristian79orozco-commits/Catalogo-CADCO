@@ -3,17 +3,26 @@ import type { CadModelType, GalleryPhoto } from '../../types';
 
 interface TechnicalVisualProps {
   modelType: CadModelType;
-  photo: GalleryPhoto;
+  photo?: GalleryPhoto;
   projectCode: string;
   className?: string;
 }
 
 export const TechnicalVisual: React.FC<TechnicalVisualProps> = ({
   modelType,
-  photo,
+  photo: rawPhoto,
   projectCode,
   className = '',
 }) => {
+  const photo: GalleryPhoto = rawPhoto ?? {
+    id: `fallback-${projectCode}`,
+    title: projectCode,
+    caption: 'Vista técnica CAD',
+    kind: 'render',
+    drawingCode: `${projectCode}-01`,
+    scale: '1:1',
+  };
+
   if (photo.imageDataUrl) {
     return (
       <div className={`relative h-full w-full overflow-hidden bg-[#070a0f] select-none ${className}`}>
