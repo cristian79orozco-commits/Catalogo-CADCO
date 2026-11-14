@@ -5,6 +5,21 @@ import {
   DEFAULT_BRAND_CONFIG,
   DEFAULT_DIGITAL_CERTIFICATES,
 } from '../data/catalogData';
+import { isSupabaseConfigured } from '../lib/supabase';
+import {
+  checkCurrentAdminSession,
+  deleteCertificateInSupabase,
+  deleteProjectInSupabase,
+  fetchCatalogFromSupabase,
+  seedSnapshotToSupabase,
+  signInAdminWithSupabase,
+  signOutAdminFromSupabase,
+  subscribeToCatalogRealtime,
+  upsertBrandConfigInSupabase,
+  upsertCertificateInSupabase,
+  upsertProjectInSupabase,
+  upsertTrainingTrackInSupabase,
+} from '../services/catalogService';
 import type {
   BrandConfig,
   CatalogCategory,
@@ -59,6 +74,19 @@ function saveSnapshot(snapshot: PersistedSnapshot) {
   } catch {
     // Ignore quota errors
   }
+}
+
+let brandSyncTimer: ReturnType<typeof setTimeout> | null = null;
+function scheduleBrandSync(fn: () => void) {
+  if (brandSyncTimer) clearTimeout(brandSyncTimer);
+  brandSyncTimer = setTimeout(fn, 500);
+}
+
+const trackSyncTimers = new Map<string, ReturnType<typeof setTimeout>>();
+function scheduleTrackSync(code: string, fn: () => void) {
+  const prev = trackSyncTimers.get(code);
+  if (prev) clearTimeout(prev);
+  trackSyncTimers.set(code, setTimeout(fn, 500));
 }
 
 function updateUrlProjectParam(projectId: string | null) {
@@ -139,9 +167,14 @@ interface CatalogState extends PersistedSnapshot {
   copiedProjectId: string | null;
   isLiveSyncing: boolean;
 
-  // Admin state
+  // Admin & Supabase sync state
   isAdminOpen: boolean;
   isAdminAuthenticated: boolean;
+  adminEmail: string | null;
+  isAuthLoading: boolean;
+  authError: string | null;
+  syncError: string | null;
+  hasRemoteData: boolean;
   githubToken: string;
 
   setActiveView: (view: CatalogViewTab) => void;
@@ -155,14 +188,18 @@ interface CatalogState extends PersistedSnapshot {
   toggleAutoRotate: () => void;
   markLinkCopied: (projectId: string) => void;
   syncFromUrl: () => void;
-  fetchLiveCatalog: () => Promise<void>;
+  fetchLiveCatalog: (options?: { force?: boolean }) => Promise<void>;
+  subscribeRealtime: () => () => void;
 
   openAdminModal: () => void;
   closeAdminModal: () => void;
+  initAdminSession: () => Promise<void>;
+  loginAdminWithSupabase: (email: string, password: string) => Promise<boolean>;
   authenticateAdmin: (pin: string) => boolean;
   logoutAdmin: () => void;
   setGithubToken: (token: string) => void;
   publishLiveToGitHub: () => Promise<void>;
+  syncLocalToSupabase: () => Promise<void>;
 
   addProject: (project: CatalogProject) => void;
   updateProject: (project: CatalogProject) => void;
@@ -192,6 +229,11 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
   isLiveSyncing: false,
   isAdminOpen: false,
   isAdminAuthenticated: false,
+  adminEmail: null,
+  isAuthLoading: false,
+  authError: null,
+  syncError: null,
+  hasRemoteData: false,
   githubToken: (() => {
     try {
       return localStorage.getItem(GH_TOKEN_KEY) ?? '';
@@ -248,9 +290,38 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
     }
   },
 
-  fetchLiveCatalog: async () => {
-    set({ isLiveSyncing: true });
+  fetchLiveCatalog: async (options) => {
+    set({ isLiveSyncing: true, syncError: null });
     try {
+      if (isSupabaseConfigured) {
+        const remote = await fetchCatalogFromSupabase();
+        if (remote) {
+          set({ hasRemoteData: remote.hasRemoteData });
+          if (remote.hasRemoteData) {
+            const s = get();
+            if (!s.isAdminAuthenticated || options?.force) {
+              const next: PersistedSnapshot = {
+                projects: remote.projects.length ? remote.projects : s.projects,
+                certificates:
+                  remote.projects.length || remote.certificates.length
+                    ? remote.certificates
+                    : s.certificates,
+                trainingTracks: remote.trainingTracks.length
+                  ? remote.trainingTracks
+                  : s.trainingTracks,
+                brandConfig: remote.brandConfig
+                  ? { ...s.brandConfig, ...remote.brandConfig }
+                  : s.brandConfig,
+              };
+              saveSnapshot(next);
+              set(next);
+            }
+            return;
+          }
+        }
+      }
+
+      // Fallback to static catalog-live.json if Supabase has no data yet or is unconfigured
       const res = await fetch(`./catalog-live.json?t=${Date.now()}`, {
         cache: 'no-store',
       });
@@ -258,7 +329,6 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
       const remote = (await res.json()) as Partial<PersistedSnapshot>;
       if (remote.projects?.length) {
         const s = get();
-        // Do not overwrite unsaved local edits if admin is currently authenticated
         if (!s.isAdminAuthenticated) {
           const next: PersistedSnapshot = {
             projects: remote.projects,
@@ -274,21 +344,98 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
           set(next);
         }
       }
-    } catch {
-      // Offline or no remote file yet; keep local snapshot
+    } catch (err) {
+      set({
+        syncError:
+          err instanceof Error ? err.message : 'No se pudo sincronizar con Supabase.',
+      });
     } finally {
       set({ isLiveSyncing: false });
     }
   },
 
-  openAdminModal: () => set({ isAdminOpen: true }),
-  closeAdminModal: () => set({ isAdminOpen: false }),
+  subscribeRealtime: () => {
+    if (!isSupabaseConfigured) return () => {};
+    return subscribeToCatalogRealtime(() => {
+      void get().fetchLiveCatalog({ force: true });
+    });
+  },
+
+  openAdminModal: () => set({ isAdminOpen: true, authError: null }),
+  closeAdminModal: () => set({ isAdminOpen: false, authError: null }),
+
+  initAdminSession: async () => {
+    if (!isSupabaseConfigured) return;
+    try {
+      const session = await checkCurrentAdminSession();
+      set({
+        isAdminAuthenticated: session.isAdmin,
+        adminEmail: session.email,
+      });
+    } catch {
+      set({ isAdminAuthenticated: false, adminEmail: null });
+    }
+  },
+
+  loginAdminWithSupabase: async (email, password) => {
+    set({ isAuthLoading: true, authError: null });
+    try {
+      const res = await signInAdminWithSupabase(email, password);
+      set({
+        isAdminAuthenticated: true,
+        adminEmail: res.email,
+        isAuthLoading: false,
+        authError: null,
+      });
+      return true;
+    } catch (err) {
+      set({
+        isAdminAuthenticated: false,
+        adminEmail: null,
+        isAuthLoading: false,
+        authError: err instanceof Error ? err.message : 'Error de autenticación.',
+      });
+      return false;
+    }
+  },
+
   authenticateAdmin: (pin) => {
+    if (isSupabaseConfigured) return false;
     const valid = pin.trim() === get().brandConfig.adminPin;
     if (valid) set({ isAdminAuthenticated: true });
     return valid;
   },
-  logoutAdmin: () => set({ isAdminAuthenticated: false, isAdminOpen: false }),
+
+  logoutAdmin: () => {
+    void signOutAdminFromSupabase();
+    set({
+      isAdminAuthenticated: false,
+      adminEmail: null,
+      isAdminOpen: false,
+      authError: null,
+    });
+  },
+
+  syncLocalToSupabase: async () => {
+    const s = get();
+    set({ isLiveSyncing: true, syncError: null });
+    try {
+      await seedSnapshotToSupabase({
+        projects: s.projects,
+        certificates: s.certificates,
+        trainingTracks: s.trainingTracks,
+        brandConfig: s.brandConfig,
+      });
+      set({ hasRemoteData: true });
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : 'Error al subir el catálogo a Supabase.';
+      set({ syncError: msg });
+      throw new Error(msg);
+    } finally {
+      set({ isLiveSyncing: false });
+    }
+  },
 
   setGithubToken: (token) => {
     try {
@@ -342,11 +489,23 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
       trainingTracks: s.trainingTracks,
       brandConfig: s.brandConfig,
     });
-    set({ projects });
+    set({ projects, syncError: null });
+    if (isSupabaseConfigured) {
+      void upsertProjectInSupabase(project, 0).catch((err) => {
+        set({
+          syncError:
+            err instanceof Error ? err.message : 'Error al guardar proyecto en Supabase.',
+        });
+      });
+    }
   },
 
   updateProject: (project) => {
     const projects = get().projects.map((p) => (p.id === project.id ? project : p));
+    const sortOrder = Math.max(
+      0,
+      projects.findIndex((p) => p.id === project.id)
+    );
     const s = get();
     saveSnapshot({
       projects,
@@ -354,7 +513,15 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
       trainingTracks: s.trainingTracks,
       brandConfig: s.brandConfig,
     });
-    set({ projects });
+    set({ projects, syncError: null });
+    if (isSupabaseConfigured) {
+      void upsertProjectInSupabase(project, sortOrder).catch((err) => {
+        set({
+          syncError:
+            err instanceof Error ? err.message : 'Error al actualizar proyecto en Supabase.',
+        });
+      });
+    }
   },
 
   deleteProject: (projectId) => {
@@ -366,7 +533,15 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
       trainingTracks: s.trainingTracks,
       brandConfig: s.brandConfig,
     });
-    set({ projects });
+    set({ projects, syncError: null });
+    if (isSupabaseConfigured) {
+      void deleteProjectInSupabase(projectId).catch((err) => {
+        set({
+          syncError:
+            err instanceof Error ? err.message : 'Error al eliminar proyecto en Supabase.',
+        });
+      });
+    }
   },
 
   addCertificate: (cert) => {
@@ -378,11 +553,23 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
       trainingTracks: s.trainingTracks,
       brandConfig: s.brandConfig,
     });
-    set({ certificates });
+    set({ certificates, syncError: null });
+    if (isSupabaseConfigured) {
+      void upsertCertificateInSupabase(cert, 0).catch((err) => {
+        set({
+          syncError:
+            err instanceof Error ? err.message : 'Error al guardar certificado en Supabase.',
+        });
+      });
+    }
   },
 
   updateCertificate: (cert) => {
     const certificates = get().certificates.map((c) => (c.id === cert.id ? cert : c));
+    const sortOrder = Math.max(
+      0,
+      certificates.findIndex((c) => c.id === cert.id)
+    );
     const s = get();
     saveSnapshot({
       projects: s.projects,
@@ -390,7 +577,15 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
       trainingTracks: s.trainingTracks,
       brandConfig: s.brandConfig,
     });
-    set({ certificates });
+    set({ certificates, syncError: null });
+    if (isSupabaseConfigured) {
+      void upsertCertificateInSupabase(cert, sortOrder).catch((err) => {
+        set({
+          syncError:
+            err instanceof Error ? err.message : 'Error al actualizar certificado en Supabase.',
+        });
+      });
+    }
   },
 
   deleteCertificate: (certId) => {
@@ -402,7 +597,15 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
       trainingTracks: s.trainingTracks,
       brandConfig: s.brandConfig,
     });
-    set({ certificates });
+    set({ certificates, syncError: null });
+    if (isSupabaseConfigured) {
+      void deleteCertificateInSupabase(certId).catch((err) => {
+        set({
+          syncError:
+            err instanceof Error ? err.message : 'Error al eliminar certificado en Supabase.',
+        });
+      });
+    }
   },
 
   updateBrandConfig: (patch) => {
@@ -414,7 +617,17 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
       trainingTracks: s.trainingTracks,
       brandConfig,
     });
-    set({ brandConfig });
+    set({ brandConfig, syncError: null });
+    if (isSupabaseConfigured) {
+      scheduleBrandSync(() => {
+        void upsertBrandConfigInSupabase(get().brandConfig).catch((err) => {
+          set({
+            syncError:
+              err instanceof Error ? err.message : 'Error al guardar configuración en Supabase.',
+          });
+        });
+      });
+    }
   },
 
   updateTrainingTrack: (track) => {
@@ -428,7 +641,19 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
       trainingTracks,
       brandConfig: s.brandConfig,
     });
-    set({ trainingTracks });
+    set({ trainingTracks, syncError: null });
+    if (isSupabaseConfigured) {
+      scheduleTrackSync(track.code, () => {
+        const latest = get().trainingTracks.find((t) => t.code === track.code);
+        if (!latest) return;
+        void upsertTrainingTrackInSupabase(latest).catch((err) => {
+          set({
+            syncError:
+              err instanceof Error ? err.message : 'Error al guardar capacitación en Supabase.',
+          });
+        });
+      });
+    }
   },
 
   importSnapshot: (snapshot) => {
@@ -444,7 +669,15 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
         : s.brandConfig,
     };
     saveSnapshot(next);
-    set(next);
+    set({ ...next, syncError: null });
+    if (isSupabaseConfigured && s.isAdminAuthenticated) {
+      void seedSnapshotToSupabase(next).catch((err) => {
+        set({
+          syncError:
+            err instanceof Error ? err.message : 'Error al sincronizar respaldo en Supabase.',
+        });
+      });
+    }
   },
 
   resetToDefaults: () => {
@@ -455,6 +688,14 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
       brandConfig: DEFAULT_BRAND_CONFIG,
     };
     saveSnapshot(defaults);
-    set(defaults);
+    set({ ...defaults, syncError: null });
+    if (isSupabaseConfigured && get().isAdminAuthenticated) {
+      void seedSnapshotToSupabase(defaults).catch((err) => {
+        set({
+          syncError:
+            err instanceof Error ? err.message : 'Error al restaurar valores en Supabase.',
+        });
+      });
+    }
   },
 }));

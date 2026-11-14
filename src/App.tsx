@@ -58,14 +58,21 @@ export function App() {
   const markLinkCopied = useCatalogStore((s) => s.markLinkCopied);
   const syncFromUrl = useCatalogStore((s) => s.syncFromUrl);
   const fetchLiveCatalog = useCatalogStore((s) => s.fetchLiveCatalog);
+  const subscribeRealtime = useCatalogStore((s) => s.subscribeRealtime);
+  const initAdminSession = useCatalogStore((s) => s.initAdminSession);
   const openAdminModal = useCatalogStore((s) => s.openAdminModal);
 
   const [catalogLinkCopied, setCatalogLinkCopied] = useState(false);
 
   useEffect(() => {
     syncFromUrl();
+    void initAdminSession();
     void fetchLiveCatalog();
-  }, [syncFromUrl, fetchLiveCatalog]);
+    const unsubscribe = subscribeRealtime();
+    return () => {
+      unsubscribe();
+    };
+  }, [syncFromUrl, initAdminSession, fetchLiveCatalog, subscribeRealtime]);
 
   const filteredProjects = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();

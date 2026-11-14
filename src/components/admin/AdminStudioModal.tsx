@@ -3,6 +3,7 @@ import {
   Award,
   Box,
   Check,
+  Database,
   Download,
   FileCode2,
   FolderPlus,
@@ -10,13 +11,16 @@ import {
   KeyRound,
   Lock,
   LogOut,
+  Mail,
   Pencil,
   RotateCcw,
   Settings,
+  ShieldCheck,
   Trash2,
   Upload,
   X,
 } from 'lucide-react';
+import { isSupabaseConfigured } from '../../lib/supabase';
 import { useCatalogStore } from '../../store/useCatalogStore';
 import { convertImageToWebp, readFileAsDataUrl } from '../../utils/imageConverter';
 import type {
@@ -81,7 +85,12 @@ export const AdminStudioModal: React.FC = () => {
   const isAdminOpen = useCatalogStore((s) => s.isAdminOpen);
   const closeAdminModal = useCatalogStore((s) => s.closeAdminModal);
   const isAdminAuthenticated = useCatalogStore((s) => s.isAdminAuthenticated);
-  const authenticateAdmin = useCatalogStore((s) => s.authenticateAdmin);
+  const loginAdminWithSupabase = useCatalogStore((s) => s.loginAdminWithSupabase);
+  const adminEmail = useCatalogStore((s) => s.adminEmail);
+  const isAuthLoading = useCatalogStore((s) => s.isAuthLoading);
+  const authError = useCatalogStore((s) => s.authError);
+  const syncError = useCatalogStore((s) => s.syncError);
+  const syncLocalToSupabase = useCatalogStore((s) => s.syncLocalToSupabase);
   const logoutAdmin = useCatalogStore((s) => s.logoutAdmin);
 
   const projects = useCatalogStore((s) => s.projects);
@@ -103,8 +112,9 @@ export const AdminStudioModal: React.FC = () => {
   const setGithubToken = useCatalogStore((s) => s.setGithubToken);
   const publishLiveToGitHub = useCatalogStore((s) => s.publishLiveToGitHub);
 
-  const [pinInput, setPinInput] = useState('');
-  const [pinError, setPinError] = useState(false);
+  const [emailInput, setEmailInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
+  const [isSyncingAll, setIsSyncingAll] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminTab>('projects');
   const [editingProject, setEditingProject] = useState<CatalogProject | null>(null);
   const [editingCert, setEditingCert] = useState<DigitalCertificate | null>(null);
@@ -122,13 +132,11 @@ export const AdminStudioModal: React.FC = () => {
     setTimeout(() => setSavedFeedback(null), 2600);
   };
 
-  const handlePinSubmit = (e: React.FormEvent) => {
+  const handleSupabaseLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (authenticateAdmin(pinInput)) {
-      setPinError(false);
-      setPinInput('');
-    } else {
-      setPinError(true);
+    const ok = await loginAdminWithSupabase(emailInput, passwordInput);
+    if (ok) {
+      setPasswordInput('');
     }
   };
 
@@ -235,42 +243,64 @@ export const AdminStudioModal: React.FC = () => {
             </button>
           </div>
 
-          <form onSubmit={handlePinSubmit} className="mt-6 space-y-4">
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-slate-300">
-                Clave de Acceso (PIN)
-              </label>
-              <div className="relative">
-                <KeyRound className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-                <input
-                  type="password"
-                  autoFocus
-                  value={pinInput}
-                  onChange={(e) => {
-                    setPinInput(e.target.value);
-                    setPinError(false);
-                  }}
-                  placeholder="Ingresa tu PIN de administrador"
-                  className="w-full rounded-xl border border-white/15 bg-[#050608] py-2.5 pr-4 pl-10 text-sm text-white outline-none focus:border-[#5bb5b9]"
-                />
+          {isSupabaseConfigured ? (
+            <form onSubmit={handleSupabaseLogin} className="mt-6 space-y-4">
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-slate-300">
+                  Correo de Administrador (Supabase Auth)
+                </label>
+                <div className="relative">
+                  <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                  <input
+                    type="email"
+                    required
+                    autoFocus
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    placeholder="admin@cadco.com"
+                    className="w-full rounded-xl border border-white/15 bg-[#050608] py-2.5 pr-4 pl-10 text-sm text-white outline-none focus:border-[#5bb5b9]"
+                  />
+                </div>
               </div>
-              {pinError && (
-                <p className="mt-1.5 text-xs text-rose-400">
-                  PIN incorrecto. Verifica e intenta de nuevo.
+
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-slate-300">
+                  Contraseña
+                </label>
+                <div className="relative">
+                  <KeyRound className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                  <input
+                    type="password"
+                    required
+                    value={passwordInput}
+                    onChange={(e) => setPasswordInput(e.target.value)}
+                    placeholder="Tu contraseña de Supabase"
+                    className="w-full rounded-xl border border-white/15 bg-[#050608] py-2.5 pr-4 pl-10 text-sm text-white outline-none focus:border-[#5bb5b9]"
+                  />
+                </div>
+              </div>
+
+              {authError && (
+                <p className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-300">
+                  {authError}
                 </p>
               )}
-              <p className="mt-2 font-mono-tech text-[11px] text-slate-500">
-                PIN inicial por defecto: CADCO2026 (puedes cambiarlo dentro del panel).
-              </p>
-            </div>
 
-            <button
-              type="submit"
-              className="w-full rounded-xl bg-[#5bb5b9] py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-[#4ea5a9]"
-            >
-              Ingresar al Studio CADCO
-            </button>
-          </form>
+              <button
+                type="submit"
+                disabled={isAuthLoading}
+                className="w-full rounded-xl bg-[#5bb5b9] py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-[#4ea5a9] disabled:opacity-50"
+              >
+                {isAuthLoading ? 'Verificando acceso...' : 'Ingresar al Studio CADCO'}
+              </button>
+            </form>
+          ) : (
+            <div className="mt-6 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-xs leading-relaxed text-amber-200">
+              Faltan las variables de entorno <code>VITE_SUPABASE_URL</code> y{' '}
+              <code>VITE_SUPABASE_ANON_KEY</code>. Configúralas en <code>.env</code> (local) o en
+              GitHub Secrets (producción) para habilitar el acceso seguro con Supabase Auth.
+            </div>
+          )}
         </div>
       </div>
     );
@@ -285,12 +315,24 @@ export const AdminStudioModal: React.FC = () => {
             <span className="rounded-lg bg-[#5bb5b9] px-2.5 py-1 font-mono-tech text-xs font-bold text-slate-950">
               ADMIN STUDIO
             </span>
-            <h2 className="font-display text-base font-bold text-white sm:text-lg">
-              Gestión Privada del Catálogo CADCO
-            </h2>
+            <div>
+              <h2 className="font-display text-base font-bold text-white sm:text-lg">
+                Gestión Privada del Catálogo CADCO
+              </h2>
+              {adminEmail && (
+                <p className="font-mono-tech text-[11px] text-[#5bb5b9]">
+                  Sesión segura Supabase: {adminEmail}
+                </p>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
+            {syncError && (
+              <span className="inline-flex items-center gap-1 rounded-lg border border-rose-500/30 bg-rose-500/15 px-3 py-1 text-xs font-medium text-rose-300">
+                {syncError}
+              </span>
+            )}
             {savedFeedback && (
               <span className="inline-flex items-center gap-1 rounded-lg border border-emerald-500/30 bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-300">
                 <Check className="h-3.5 w-3.5" />
@@ -891,16 +933,18 @@ export const AdminStudioModal: React.FC = () => {
                     className="w-full rounded-lg border border-white/15 bg-[#050608] px-3 py-2 text-sm text-white"
                   />
                 </div>
-                <div>
-                  <label className="mb-1 block text-xs text-slate-400">
-                    PIN de Administrador
-                  </label>
-                  <input
-                    value={brandConfig.adminPin}
-                    onChange={(e) => updateBrandConfig({ adminPin: e.target.value })}
-                    className="w-full rounded-lg border border-white/15 bg-[#050608] px-3 py-2 text-sm text-white"
-                  />
-                </div>
+                {!isSupabaseConfigured && (
+                  <div>
+                    <label className="mb-1 block text-xs text-slate-400">
+                      PIN de Administrador
+                    </label>
+                    <input
+                      value={brandConfig.adminPin}
+                      onChange={(e) => updateBrandConfig({ adminPin: e.target.value })}
+                      className="w-full rounded-lg border border-white/15 bg-[#050608] px-3 py-2 text-sm text-white"
+                    />
+                  </div>
+                )}
               </div>
 
               <div>
@@ -959,6 +1003,45 @@ export const AdminStudioModal: React.FC = () => {
           {/* TAB 4: PUBLISH LIVE & BACKUP */}
           {activeTab === 'backup' && (
             <div className="max-w-2xl space-y-6">
+              {isSupabaseConfigured && (
+                <div className="rounded-xl border border-emerald-500/35 bg-[#070a0f] p-5">
+                  <div className="flex items-center gap-2 text-emerald-300">
+                    <ShieldCheck className="h-5 w-5" />
+                    <h4 className="font-display text-base font-bold text-white">
+                      Base de Datos Supabase Conectada (Tiempo Real + RLS)
+                    </h4>
+                  </div>
+                  <p className="mt-1.5 text-xs leading-relaxed text-slate-300">
+                    Cada proyecto, certificado o ajuste que guardes se sincroniza automáticamente con Supabase y se refleja al instante en tu celular y en el navegador de cualquier cliente. Si tienes cambios locales pendientes en este equipo, súbelos ahora con un clic:
+                  </p>
+                  <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      disabled={isSyncingAll}
+                      onClick={async () => {
+                        setIsSyncingAll(true);
+                        try {
+                          await syncLocalToSupabase();
+                          showSavedToast('¡Catálogo completo sincronizado con Supabase!');
+                        } catch (err) {
+                          setPublishError(
+                            err instanceof Error ? err.message : 'Error al sincronizar con Supabase.'
+                          );
+                        } finally {
+                          setIsSyncingAll(false);
+                        }
+                      }}
+                      className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-2.5 text-xs font-semibold text-slate-950 transition hover:bg-emerald-400 disabled:opacity-50"
+                    >
+                      <Database className="h-4 w-4" />
+                      {isSyncingAll
+                        ? 'Sincronizando con Supabase...'
+                        : 'Sincronizar Catálogo Local → Supabase'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div className="rounded-xl border border-[#5bb5b9]/35 bg-[#070a0f] p-5">
                 <h4 className="font-display text-base font-bold text-white">
                   Publicar en Tiempo Real para Todos tus Clientes
