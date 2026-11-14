@@ -29,8 +29,8 @@ export const ContactSection: React.FC = () => {
     : null;
 
   return (
-    <section id="contacto" className="border-t border-white/10 py-16 sm:py-24">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-12 lg:px-8">
+    <section id="contacto" className="py-2 sm:py-4">
+      <div className="grid gap-10 lg:grid-cols-12">
         <div className="lg:col-span-5">
           <img
             src="./cadco-logo.png"
@@ -65,7 +65,7 @@ export const ContactSection: React.FC = () => {
 
         <form
           onSubmit={handleCopyBrief}
-          className="rounded-2xl border border-white/10 bg-[#0b0e13]/95 p-6 sm:p-8 lg:col-span-7"
+          className="cadco-card p-6 sm:p-8 lg:col-span-7"
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
@@ -77,7 +77,7 @@ export const ContactSection: React.FC = () => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Ej. Industrias Alfa / Estudiante"
-                className="w-full rounded-xl border border-white/15 bg-[#050608] px-3.5 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-[#5bb5b9]"
+                className="cadco-input w-full px-3.5 py-2.5 text-sm"
               />
             </div>
             <div>
@@ -87,7 +87,7 @@ export const ContactSection: React.FC = () => {
               <select
                 value={service}
                 onChange={(e) => setService(e.target.value)}
-                className="w-full rounded-xl border border-white/15 bg-[#050608] px-3.5 py-2.5 text-sm text-white outline-none focus:border-[#5bb5b9]"
+                className="cadco-input w-full px-3.5 py-2.5 text-sm"
               >
                 <option>Diseño CAD & Modelado Mecánico</option>
                 <option>Planimetría Técnica & GD&T</option>
@@ -107,14 +107,14 @@ export const ContactSection: React.FC = () => {
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Describe brevemente tu pieza, ensamble, tolerancias o nivel actual en SolidWorks..."
-              className="w-full rounded-xl border border-white/15 bg-[#050608] px-3.5 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-[#5bb5b9]"
+              className="cadco-input w-full px-3.5 py-2.5 text-sm"
             />
           </div>
 
           <div className="mt-5 flex flex-wrap items-center gap-3">
             <button
               type="submit"
-              className="inline-flex items-center gap-2 rounded-xl bg-[#5bb5b9] px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-[#4ea5a9]"
+              className="cadco-btn-primary px-5 py-2.5 text-sm"
             >
               {copiedBrief ? (
                 <>

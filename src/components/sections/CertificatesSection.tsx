@@ -9,14 +9,14 @@ export const CertificatesSection: React.FC = () => {
   const [activeCert, setActiveCert] = useState<DigitalCertificate | null>(null);
 
   return (
-    <section id="certificados" className="border-t border-white/10 py-16 sm:py-24">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section id="certificados" className="py-2 sm:py-4">
+      <div>
         <div className="max-w-2xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#5bb5b9]/30 bg-[#5bb5b9]/10 px-3.5 py-1 text-xs font-medium text-[#5bb5b9]">
+          <div className="cadco-badge px-3.5 py-1 text-xs font-medium">
             <ShieldCheck className="h-3.5 w-3.5" />
             <span>Respaldo Profesional Verificado</span>
           </div>
-          <h2 className="mt-3 font-display text-3xl font-bold text-white sm:text-4xl">
+          <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-white sm:text-4xl">
             Certificaciones Oficiales{' '}
             <span className="text-[#5bb5b9]">SolidWorks</span>
           </h2>
@@ -25,7 +25,7 @@ export const CertificatesSection: React.FC = () => {
           </p>
         </div>
 
-        <div className="mt-10 grid gap-6 md:grid-cols-2">
+        <div className="mt-8 grid gap-6 md:grid-cols-2">
           {certificates.map((cert, index) => (
             <motion.article
               key={cert.id}
@@ -33,7 +33,7 @@ export const CertificatesSection: React.FC = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.4, delay: index * 0.08 }}
-              className="group flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0b0e13]/95 transition hover:border-[#5bb5b9]/50 hover:shadow-[0_12px_40px_-14px_rgba(91,181,185,0.28)]"
+              className="cadco-card group flex flex-col overflow-hidden"
             >
               {/* Certificate Visual */}
               <div className="relative aspect-[16/10] w-full overflow-hidden border-b border-white/10 bg-gradient-to-br from-[#0e1520] via-[#080b10] to-[#050608]">

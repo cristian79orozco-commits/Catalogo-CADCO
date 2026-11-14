@@ -6,27 +6,27 @@ export const TrainingSection: React.FC = () => {
   const trainingTracks = useCatalogStore((s) => s.trainingTracks);
 
   return (
-    <section id="capacitacion" className="border-t border-white/10 py-16 sm:py-24">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section id="capacitacion" className="py-2 sm:py-4">
+      <div>
         <div className="max-w-2xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#5bb5b9]/30 bg-[#5bb5b9]/10 px-3 py-1 text-xs font-medium text-[#5bb5b9]">
+          <div className="cadco-badge px-3 py-1 text-xs font-medium">
             <GraduationCap className="h-3.5 w-3.5" />
             <span>Academia & Mentoría CADCO</span>
           </div>
-          <h2 className="mt-3 font-display text-3xl font-bold text-white sm:text-4xl">
+          <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-white sm:text-4xl">
             Capacitaciones SolidWorks{' '}
             <span className="text-[#5bb5b9]">CSWA & CSWP</span>
           </h2>
-          <p className="mt-3 text-base text-slate-300">
+          <p className="mt-3 text-sm leading-relaxed text-slate-300 sm:text-base">
             Entrenamiento práctico enfocado 100% en aprobar las certificaciones oficiales de Dassault Systèmes en el primer intento, con simulacros cronometrados y resolución de piezas reales.
           </p>
         </div>
 
-        <div className="mt-10 grid gap-6 lg:grid-cols-2">
+        <div className="mt-8 grid gap-6 lg:grid-cols-2">
           {trainingTracks.map((track) => (
             <div
               key={track.code}
-              className="flex flex-col justify-between rounded-2xl border border-white/10 bg-[#0b0e13]/90 p-6 transition hover:border-[#5bb5b9]/50 sm:p-8"
+              className="cadco-card flex flex-col justify-between p-6 sm:p-8"
             >
               <div>
                 <div className="flex flex-wrap items-center justify-between gap-3">

@@ -210,7 +210,7 @@ export function App() {
           <button
             type="button"
             onClick={handleCopyCatalogUrl}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#5bb5b9] px-4 py-2.5 text-xs font-semibold text-slate-950 transition hover:bg-[#4ea5a9]"
+            className="cadco-btn-primary w-full px-4 py-2.5 text-xs"
           >
             {catalogLinkCopied ? (
               <>
@@ -312,20 +312,21 @@ export function App() {
               >
                 {/* Featured 3D Engineering Dossier Banner */}
                 {featuredProject && (
-                  <section className="overflow-hidden rounded-2xl border border-[#5bb5b9]/30 bg-[#0b0e13]/95 shadow-2xl">
-                    <div className="grid items-stretch lg:grid-cols-12">
+                  <section className="relative overflow-hidden rounded-2xl border border-[#5bb5b9]/30 bg-[#0b0e13]/95 shadow-[0_20px_60px_-20px_rgba(91,181,185,0.2)]">
+                    <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-[#5bb5b9]/10 blur-3xl" />
+                    <div className="relative grid items-stretch lg:grid-cols-12">
                       <div className="flex flex-col justify-between p-6 sm:p-8 lg:col-span-6">
                         <div>
-                          <div className="inline-flex items-center gap-2 rounded-full border border-[#5bb5b9]/35 bg-[#5bb5b9]/10 px-3 py-1 font-mono-tech text-[11px] font-medium text-[#5bb5b9]">
+                          <div className="cadco-badge px-3 py-1 text-[11px] font-medium">
                             <Award className="h-3.5 w-3.5" />
                             <span>{brandConfig.heroBadge}</span>
                           </div>
-                          <h1 className="mt-4 font-display text-2xl font-bold tracking-tight text-white sm:text-3xl">
+                          <h1 className="mt-4 font-display text-3xl font-bold leading-[1.15] tracking-tight text-white sm:text-4xl lg:text-[42px]">
                             {brandConfig.heroTitlePrefix}{' '}
                             <span className="text-[#5bb5b9]">{brandConfig.heroTitleHighlight}</span>{' '}
                             {brandConfig.heroTitleSuffix}
                           </h1>
-                          <p className="mt-3 text-sm leading-relaxed text-slate-300">
+                          <p className="mt-3.5 text-sm leading-relaxed text-slate-300 sm:text-base">
                             {brandConfig.heroSubtitle}
                           </p>
                         </div>
@@ -334,7 +335,7 @@ export function App() {
                           <button
                             type="button"
                             onClick={() => handleOpen3D(featuredProject.id)}
-                            className="inline-flex items-center gap-2 rounded-xl bg-[#5bb5b9] px-4 py-2.5 text-xs font-semibold text-slate-950 transition hover:bg-[#4ea5a9]"
+                            className="cadco-btn-primary px-5 py-2.5 text-xs sm:text-sm"
                           >
                             <Box className="h-4 w-4" />
                             Inspeccionar Trabajo Destacado
@@ -342,7 +343,7 @@ export function App() {
                           <button
                             type="button"
                             onClick={() => setActiveView('certificates')}
-                            className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-xs font-medium text-white transition hover:border-[#5bb5b9]/50"
+                            className="cadco-btn-secondary px-4 py-2.5 text-xs sm:text-sm"
                           >
                             <ShieldCheck className="h-4 w-4 text-[#5bb5b9]" />
                             Ver Certificados
@@ -393,7 +394,7 @@ export function App() {
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Buscar trabajo, código, norma..."
-                      className="w-full rounded-xl border border-white/15 bg-[#0b0e13] py-2 pr-4 pl-9 text-xs text-white placeholder-slate-500 outline-none focus:border-[#5bb5b9]"
+                      className="cadco-input w-full py-2 pr-4 pl-9 text-xs"
                     />
                   </div>
                 </div>

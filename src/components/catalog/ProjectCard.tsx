@@ -16,7 +16,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = React.memo(
     const coverPhoto = project.photos[0];
 
     return (
-      <article className="group flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0b0e13]/90 transition duration-300 hover:-translate-y-1 hover:border-[#5bb5b9]/50 hover:shadow-[0_12px_40px_-12px_rgba(91,181,185,0.28)]">
+      <article className="cadco-card group flex flex-col overflow-hidden hover:-translate-y-1">
         {/* Visual Preview Area */}
         <div className="relative aspect-[16/10] w-full overflow-hidden border-b border-white/10 bg-[#070a0f]">
           <TechnicalVisual
@@ -66,7 +66,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = React.memo(
             <button
               type="button"
               onClick={() => onOpen3D(project.id)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#5bb5b9] px-3 py-1.5 text-xs font-semibold text-slate-950 shadow-lg transition hover:bg-[#4ea5a9]"
+              className="cadco-btn-primary rounded-lg px-3 py-1.5 text-xs"
             >
               <Box className="h-3.5 w-3.5" />
               Inspeccionar 3D
@@ -74,7 +74,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = React.memo(
             <button
               type="button"
               onClick={() => onOpenPhoto(project.id, 1)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-white/20 bg-black/80 px-3 py-1.5 text-xs font-medium text-slate-100 backdrop-blur-md transition hover:border-[#5bb5b9] hover:text-[#5bb5b9]"
+              className="cadco-btn-secondary rounded-lg px-3 py-1.5 text-xs"
             >
               <ImageIcon className="h-3.5 w-3.5" />
               Planimetría ({project.photos.length})
