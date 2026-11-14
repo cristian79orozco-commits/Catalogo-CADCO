@@ -353,6 +353,14 @@ export async function signInAdminWithSupabase(
   });
 
   if (error) {
+    if (error.message.toLowerCase().includes('invalid login credentials')) {
+      throw new Error(
+        'Correo o contraseña incorrectos en Supabase Auth. Si creaste el usuario por invitación o sin confirmar, actualiza su contraseña desde el SQL Editor de Supabase.'
+      );
+    }
+    if (error.message.toLowerCase().includes('email not confirmed')) {
+      throw new Error('Tu correo en Supabase Auth aún no está confirmado.');
+    }
     throw new Error(error.message || 'Credenciales inválidas.');
   }
 

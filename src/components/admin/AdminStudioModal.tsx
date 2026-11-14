@@ -5,6 +5,8 @@ import {
   Check,
   Database,
   Download,
+  Eye,
+  EyeOff,
   FileCode2,
   FolderPlus,
   ImagePlus,
@@ -114,6 +116,7 @@ export const AdminStudioModal: React.FC = () => {
 
   const [emailInput, setEmailInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isSyncingAll, setIsSyncingAll] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminTab>('projects');
   const [editingProject, setEditingProject] = useState<CatalogProject | null>(null);
@@ -270,13 +273,21 @@ export const AdminStudioModal: React.FC = () => {
                 <div className="relative">
                   <KeyRound className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                   <input
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     required
                     value={passwordInput}
                     onChange={(e) => setPasswordInput(e.target.value)}
                     placeholder="Tu contraseña de Supabase"
-                    className="w-full rounded-xl border border-white/15 bg-[#050608] py-2.5 pr-4 pl-10 text-sm text-white outline-none focus:border-[#5bb5b9]"
+                    className="w-full rounded-xl border border-white/15 bg-[#050608] py-2.5 pr-10 pl-10 text-sm text-white outline-none focus:border-[#5bb5b9]"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    aria-label={showPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
               </div>
 
