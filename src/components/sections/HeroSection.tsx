@@ -1,35 +1,39 @@
 import React from 'react';
-import { Award, Box, ChevronDown, FileBox, GraduationCap, Layers } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Award, Box, ChevronDown, GraduationCap, Layers } from 'lucide-react';
+import { useCatalogStore } from '../../store/useCatalogStore';
 import { R3FCadViewer } from '../viewers/R3FCadViewer';
 
-interface HeroSectionProps {
-  onOpenUniversalViewer: () => void;
-}
+export const HeroSection: React.FC = () => {
+  const brandConfig = useCatalogStore((s) => s.brandConfig);
 
-export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenUniversalViewer }) => {
   return (
     <section className="relative overflow-hidden border-b border-white/10 pt-24 pb-16 sm:pt-28 sm:pb-24">
-      {/* Subtle radial teal glow */}
-      <div className="pointer-events-none absolute -top-24 right-0 h-[480px] w-[480px] rounded-full bg-[#5bb5b9]/10 blur-[120px]" />
+      <div className="pointer-events-none absolute -top-24 right-0 h-[480px] w-[480px] rounded-full bg-[#5bb5b9]/12 blur-[130px]" />
 
       <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 sm:px-6 lg:grid-cols-12 lg:px-8">
         {/* Left Copy */}
-        <div className="lg:col-span-6">
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="lg:col-span-6"
+        >
           <div className="inline-flex flex-wrap items-center gap-2 rounded-full border border-[#5bb5b9]/35 bg-[#5bb5b9]/10 px-3.5 py-1.5 text-xs font-medium text-[#5bb5b9]">
             <Award className="h-3.5 w-3.5" />
-            <span>Certificado Oficial SolidWorks CSWA & CSWP</span>
+            <span>{brandConfig.heroBadge}</span>
           </div>
 
           <h1 className="mt-5 font-display text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-[3.25rem] lg:leading-[1.1]">
-            Ingeniería CAD 3D,{' '}
+            {brandConfig.heroTitlePrefix}{' '}
             <span className="bg-gradient-to-r from-[#5bb5b9] to-teal-300 bg-clip-text text-transparent">
-              Modelado Mecánico
+              {brandConfig.heroTitleHighlight}
             </span>{' '}
-            y Planimetría de Precisión.
+            {brandConfig.heroTitleSuffix}
           </h1>
 
           <p className="mt-5 max-w-xl text-base leading-relaxed text-slate-300 sm:text-lg">
-            En <strong className="text-white">CADCO</strong> transformamos ideas y requerimientos industriales en modelos 3D listos para manufactura CNC, corte láser y ensamble. Además, preparamos estudiantes para aprobar sus certificaciones <strong className="text-[#5bb5b9]">CSWA y CSWP</strong> sin complicaciones.
+            {brandConfig.heroSubtitle}
           </p>
 
           {/* Key Capabilities */}
@@ -41,7 +45,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenUniversalViewer 
             ].map(({ icon: Icon, label }) => (
               <div
                 key={label}
-                className="flex items-center gap-2 rounded-xl border border-white/10 bg-[#0b0e13]/80 px-3 py-2.5 text-xs font-medium text-slate-200"
+                className="flex items-center gap-2 rounded-xl border border-white/10 bg-[#0b0e13]/85 px-3 py-2.5 text-xs font-medium text-slate-200"
               >
                 <Icon className="h-4 w-4 shrink-0 text-[#5bb5b9]" />
                 <span>{label}</span>
@@ -55,28 +59,32 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenUniversalViewer 
               href="#catalogo"
               className="inline-flex items-center gap-2 rounded-xl bg-[#5bb5b9] px-5 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-[#5bb5b9]/20 transition hover:bg-[#4ea5a9]"
             >
-              Explorar Catálogo 3D
+              Explorar Catálogo de Trabajos
               <ChevronDown className="h-4 w-4" />
             </a>
-            <button
-              type="button"
-              onClick={onOpenUniversalViewer}
+            <a
+              href="#certificados"
               className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-medium text-white transition hover:border-[#5bb5b9]/60 hover:bg-[#5bb5b9]/10"
             >
-              <FileBox className="h-4 w-4 text-[#5bb5b9]" />
-              Visor Universal (STEP / STL)
-            </button>
+              <Award className="h-4 w-4 text-[#5bb5b9]" />
+              Ver Certificaciones
+            </a>
           </div>
-        </div>
+        </motion.div>
 
         {/* Right Interactive 3D Hero Stage */}
-        <div className="lg:col-span-6">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.97 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.55, delay: 0.1 }}
+          className="lg:col-span-6"
+        >
           <div className="relative overflow-hidden rounded-2xl border border-[#5bb5b9]/30 bg-[#070a0f] shadow-2xl shadow-[#5bb5b9]/10">
-            <div className="flex items-center justify-between border-b border-white/10 bg-[#0b0e13]/90 px-4 py-2.5">
+            <div className="flex items-center justify-between border-b border-white/10 bg-[#0b0e13]/95 px-4 py-2.5">
               <div className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 rounded-full bg-[#5bb5b9]" />
                 <span className="font-mono-tech text-xs font-medium text-slate-200">
-                  LIVE 3D VIEWPORT · REDUCTOR PLANETARIO 4:1
+                  VISOR 3D INTERACTIVO · ENSAMBLE MECÁNICO
                 </span>
               </div>
               <span className="font-mono-tech text-[11px] text-slate-400">
@@ -94,12 +102,12 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenUniversalViewer 
               />
             </div>
 
-            <div className="flex items-center justify-between border-t border-white/10 bg-[#0b0e13]/90 px-4 py-2 text-[11px] font-mono-tech text-slate-400">
-              <span>Three.js + React Three Fiber (MIT)</span>
-              <span className="text-[#5bb5b9]">60 FPS WebGL</span>
+            <div className="flex items-center justify-between border-t border-white/10 bg-[#0b0e13]/95 px-4 py-2 text-[11px] font-mono-tech text-slate-400">
+              <span>{brandConfig.brandName} · Ingeniería & Diseño Mecánico</span>
+              <span className="text-[#5bb5b9]">Inspección en Tiempo Real</span>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

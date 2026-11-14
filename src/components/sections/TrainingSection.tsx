@@ -1,8 +1,10 @@
 import React from 'react';
 import { Award, CheckCircle2, Clock, FileCheck2, GraduationCap } from 'lucide-react';
-import { CERTIFICATION_TRACKS } from '../../data/catalogData';
+import { useCatalogStore } from '../../store/useCatalogStore';
 
 export const TrainingSection: React.FC = () => {
+  const trainingTracks = useCatalogStore((s) => s.trainingTracks);
+
   return (
     <section id="capacitacion" className="border-t border-white/10 py-16 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -21,7 +23,7 @@ export const TrainingSection: React.FC = () => {
         </div>
 
         <div className="mt-10 grid gap-6 lg:grid-cols-2">
-          {CERTIFICATION_TRACKS.map((track) => (
+          {trainingTracks.map((track) => (
             <div
               key={track.code}
               className="flex flex-col justify-between rounded-2xl border border-white/10 bg-[#0b0e13]/90 p-6 transition hover:border-[#5bb5b9]/50 sm:p-8"

@@ -14,6 +14,22 @@ export const TechnicalVisual: React.FC<TechnicalVisualProps> = ({
   projectCode,
   className = '',
 }) => {
+  if (photo.imageDataUrl) {
+    return (
+      <div className={`relative h-full w-full overflow-hidden bg-[#070a0f] select-none ${className}`}>
+        <img
+          src={photo.imageDataUrl}
+          alt={photo.title}
+          loading="lazy"
+          className="h-full w-full object-cover"
+        />
+        <div className="pointer-events-none absolute right-3 bottom-3 rounded-md border border-[#5bb5b9]/40 bg-black/80 px-2.5 py-1 font-mono-tech text-[10px] text-[#5bb5b9] backdrop-blur-sm">
+          {projectCode} · {photo.drawingCode}
+        </div>
+      </div>
+    );
+  }
+
   const isBlueprint = photo.kind === 'blueprint';
   const isDetail = photo.kind === 'detail';
 

@@ -5,8 +5,6 @@ export type CatalogCategory =
   | 'ensambles'
   | 'superficies';
 
-export type ViewerEngine = 'r3f' | 'babylon' | 'online3d';
-
 export type CadModelType =
   | 'planetary-gear'
   | 'hydraulic-flange'
@@ -24,6 +22,12 @@ export interface GalleryPhoto {
   kind: VisualKind;
   drawingCode: string;
   scale: string;
+  imageDataUrl?: string; // Optimized .webp image uploaded by admin
+}
+
+export interface CustomCadFile {
+  name: string;
+  dataUrl: string;
 }
 
 export interface TechnicalSpec {
@@ -44,11 +48,23 @@ export interface CatalogProject {
   quickSummary: string;
   description: string;
   modelType: CadModelType;
+  customCadFile?: CustomCadFile;
   specs: TechnicalSpec;
   solidworksModules: string[];
   tags: string[];
   featured?: boolean;
   photos: GalleryPhoto[];
+}
+
+export interface DigitalCertificate {
+  id: string;
+  code: string;
+  title: string;
+  issuer: string;
+  credentialId: string;
+  issueDate: string;
+  description: string;
+  imageDataUrl?: string; // Optimized .webp certificate image
 }
 
 export interface CertificationTrack {
@@ -63,10 +79,16 @@ export interface CertificationTrack {
   deliverables: string[];
 }
 
-export interface TechStackLicense {
-  name: string;
-  packageName: string;
-  license: string;
-  role: string;
-  url: string;
+export interface BrandConfig {
+  brandName: string;
+  heroBadge: string;
+  heroTitlePrefix: string;
+  heroTitleHighlight: string;
+  heroTitleSuffix: string;
+  heroSubtitle: string;
+  contactTitle: string;
+  contactSubtitle: string;
+  contactEmail: string;
+  whatsappNumber: string;
+  adminPin: string;
 }

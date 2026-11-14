@@ -1,17 +1,57 @@
 import type {
+  BrandConfig,
   CatalogCategory,
   CatalogProject,
   CertificationTrack,
-  TechStackLicense,
+  DigitalCertificate,
 } from '../types';
 
 export const CATEGORY_LABELS: Record<CatalogCategory, string> = {
-  all: 'Todos los Proyectos',
+  all: 'Todos los Trabajos',
   mecanico: 'Modelado Mecánico',
   planimetria: 'Planimetría & GD&T',
   ensambles: 'Ensambles & Cinemática',
   superficies: 'Chapa & Superficies',
 };
+
+export const DEFAULT_BRAND_CONFIG: BrandConfig = {
+  brandName: 'CADCO',
+  heroBadge: 'Ingeniería CAD · Certificación Oficial SolidWorks CSWA & CSWP',
+  heroTitlePrefix: 'Diseño CAD,',
+  heroTitleHighlight: 'Modelado Mecánico',
+  heroTitleSuffix: 'y Planimetría de Alta Precisión.',
+  heroSubtitle:
+    'Transformamos requerimientos industriales en modelos 3D paramétricos, ensambles validados y planimetría técnica lista para manufactura CNC, corte láser y producción. Además, capacitamos estudiantes para aprobar sus certificaciones CSWA y CSWP con total seguridad.',
+  contactTitle: '¿Listo para iniciar tu proyecto o certificación?',
+  contactSubtitle:
+    'Comparte los requerimientos de tu pieza, ensamble mecánico, levantamiento de planos o plan de preparación CSWA/CSWP. Respuesta directa y asesoría técnica personalizada.',
+  contactEmail: 'cristian79orozco@gmail.com',
+  whatsappNumber: '',
+  adminPin: 'CADCO2026',
+};
+
+export const DEFAULT_DIGITAL_CERTIFICATES: DigitalCertificate[] = [
+  {
+    id: 'cert-cswp',
+    code: 'CSWP',
+    title: 'Certified SolidWorks Professional (CSWP)',
+    issuer: 'Dassault Systèmes · SolidWorks Corporation',
+    credentialId: 'C-XXXXXXXXXX (Editable en Admin)',
+    issueDate: 'Vigente · Verificable Online',
+    description:
+      'Certificación profesional que acredita dominio avanzado en modelado paramétrico complejo, configuraciones, tablas de diseño, ecuaciones y ensambles mecánicos bajo presión de tiempo.',
+  },
+  {
+    id: 'cert-cswa',
+    code: 'CSWA',
+    title: 'Certified SolidWorks Associate (CSWA)',
+    issuer: 'Dassault Systèmes · SolidWorks Corporation',
+    credentialId: 'C-XXXXXXXXXX (Editable en Admin)',
+    issueDate: 'Vigente · Verificable Online',
+    description:
+      'Certificación oficial en fundamentos de diseño mecánico 3D, croquizado paramétrico, propiedades físicas, ensambles y lectura de planimetría técnica.',
+  },
+];
 
 export const CATALOG_PROJECTS: CatalogProject[] = [
   {
@@ -34,7 +74,7 @@ export const CATALOG_PROJECTS: CatalogProject[] = [
       proceso: 'Fresado CNC 4 Ejes + Tallado',
       tiempoEntrega: '5 días hábiles',
     },
-    solidworksModules: ['SolidWorks Assemblies', 'Toolbox Gears', 'Motion Study', 'Drawings GD&T'],
+    solidworksModules: ['Ensambles', 'Engranajes', 'Estudio de Movimiento', 'Planos GD&T'],
     tags: ['Engranajes', 'Transmisión', 'BOM', 'CNC', 'SolidWorks'],
     photos: [
       {
@@ -78,12 +118,12 @@ export const CATALOG_PROJECTS: CatalogProject[] = [
     specs: {
       material: 'Acero Inoxidable AISI 316L',
       tolerancia: '±0.02 mm en alojamiento O-Ring',
-      software: 'SolidWorks + Design Tables',
+      software: 'SolidWorks + Tablas de Diseño',
       norma: 'ASME Y14.5-2018 / SAE J518',
       proceso: 'Torneado + Centro de Mecanizado CNC',
       tiempoEntrega: '2 días hábiles',
     },
-    solidworksModules: ['Part Modeling', 'Design Tables', 'GD&T DimXpert', '2D Drawings'],
+    solidworksModules: ['Modelado Paramétrico', 'Tablas de Diseño', 'GD&T DimXpert', 'Planos 2D'],
     tags: ['Hidráulica', 'GD&T', 'Planimetría', 'CNC', 'Inoxidable'],
     photos: [
       {
@@ -132,13 +172,13 @@ export const CATALOG_PROJECTS: CatalogProject[] = [
       proceso: 'CNC 3 Ejes + Impresión 3D Industrial',
       tiempoEntrega: '4 días hábiles',
     },
-    solidworksModules: ['Assemblies', 'Mate Controller', 'Interference Detection', 'STEP Export'],
+    solidworksModules: ['Ensambles', 'Controlador de Relaciones', 'Detección de Interferencias', 'Exportación STEP'],
     tags: ['Robótica', 'Automatización', 'Cinemática', 'Cobot', 'Aluminio'],
     photos: [
       {
         id: 'rg-1',
         title: 'Render de Efector Final Completo',
-        caption: 'Acabado aluminio anodizado oscuro con acentos CADCO Teal.',
+        caption: 'Acabado aluminio anodizado oscuro con mordazas de precisión.',
         kind: 'render',
         drawingCode: 'CADCO-EN-003-R01',
         scale: '1:1',
@@ -180,7 +220,7 @@ export const CATALOG_PROJECTS: CatalogProject[] = [
       proceso: 'Corte Láser Fibra + Plegadora CNC',
       tiempoEntrega: '2 días hábiles',
     },
-    solidworksModules: ['Sheet Metal', 'Flat Pattern', 'DXF Export', 'Static FEA'],
+    solidworksModules: ['Chapa Metálica', 'Chapa Desplegada', 'Exportación DXF', 'Análisis Estático'],
     tags: ['Chapa Metálica', 'DXF', 'Corte Láser', 'Plegado', 'Sheet Metal'],
     photos: [
       {
@@ -193,7 +233,7 @@ export const CATALOG_PROJECTS: CatalogProject[] = [
       },
       {
         id: 'sm-2',
-        title: 'Desarrollo Plano (Flat Pattern) + Tabla de Dobleces',
+        title: 'Desarrollo Plano + Tabla de Dobleces',
         caption: 'Líneas de centro de doblez, radios interiores R3.0 y cotas de corte.',
         kind: 'blueprint',
         drawingCode: 'CADCO-SM-004-PL01',
@@ -223,12 +263,12 @@ export const CATALOG_PROJECTS: CatalogProject[] = [
     specs: {
       material: 'Aluminio 4032 (Pistón) / Acero 4340 (Biela)',
       tolerancia: '±0.01 mm en muñones y alojamientos',
-      software: 'SolidWorks Advanced Modeling',
+      software: 'SolidWorks Modelado Avanzado',
       norma: 'ISO 286 / ANSI B4.1',
       proceso: 'Forja + Rectificado Cilíndrico + CNC',
       tiempoEntrega: '6 días hábiles',
     },
-    solidworksModules: ['Advanced Part', 'Surfaces', 'Mass Properties', 'Exploded Views'],
+    solidworksModules: ['Sólidos Avanzados', 'Superficies', 'Propiedades Físicas', 'Vista Explosionada'],
     tags: ['Automotriz', 'Motor', 'Biela', 'Pistón', 'Tolerancias'],
     photos: [
       {
@@ -271,12 +311,12 @@ export const CATALOG_PROJECTS: CatalogProject[] = [
     specs: {
       material: 'Hierro Dúctil GGG40 / Vástago AISI 420',
       tolerancia: 'ISO 8062 CT8 (Fundición) + CNC',
-      software: 'SolidWorks + Routing',
+      software: 'SolidWorks + Tuberías',
       norma: 'EN 1092-1 PN16 / API 600',
       proceso: 'Fundición en Arena + Mecanizado',
       tiempoEntrega: '5 días hábiles',
     },
-    solidworksModules: ['Mold/Cast Drafts', 'Configurations', 'Section Views', 'BOM'],
+    solidworksModules: ['Ángulos de Salida', 'Configuraciones', 'Vistas de Sección', 'Lista de Materiales'],
     tags: ['Válvulas', 'Piping', 'Ingeniería Inversa', 'Fundición', 'PN16'],
     photos: [
       {
@@ -352,36 +392,5 @@ export const CERTIFICATION_TRACKS: CertificationTrack[] = [
       'Plantillas y atajos de teclado de productividad industrial',
       'Revisión en vivo de archivos .SLDPRT y .SLDASM',
     ],
-  },
-];
-
-export const TECH_STACK_LICENSES: TechStackLicense[] = [
-  {
-    name: 'React Three Fiber + Drei',
-    packageName: '@react-three/fiber & @react-three/drei',
-    license: 'MIT License',
-    role: 'Motor 3D declarativo PBR, vista explosionada y controles orbitales',
-    url: 'https://github.com/pmndrs/react-three-fiber',
-  },
-  {
-    name: 'Three.js',
-    packageName: 'three',
-    license: 'MIT License',
-    role: 'Renderizado WebGL de alto rendimiento y geometrías mecánicas',
-    url: 'https://threejs.org/',
-  },
-  {
-    name: 'Babylon.js',
-    packageName: '@babylonjs/core',
-    license: 'Apache License 2.0',
-    role: 'Motor alternativo de inspección PBR industrial y mallas CAD',
-    url: 'https://www.babylonjs.com/',
-  },
-  {
-    name: 'Online 3D Viewer',
-    packageName: 'online-3d-viewer',
-    license: 'MIT License',
-    role: 'Visor universal de archivos reales (.STEP, .IGES, .STL, .OBJ, .GLB)',
-    url: 'https://github.com/kovacsv/Online3DViewer',
   },
 ];
