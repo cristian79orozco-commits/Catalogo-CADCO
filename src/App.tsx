@@ -1,10 +1,22 @@
 import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
-import { Check, Lock, Menu, Search, Share2, X } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  Award,
+  Box,
+  Check,
+  GraduationCap,
+  Layers,
+  Lock,
+  Mail,
+  Search,
+  Share2,
+  ShieldCheck,
+} from 'lucide-react';
 import { CATEGORY_LABELS } from './data/catalogData';
-import { useCatalogStore } from './store/useCatalogStore';
+import { useCatalogStore, type CatalogViewTab } from './store/useCatalogStore';
 import type { CatalogCategory } from './types';
-import { HeroSection } from './components/sections/HeroSection';
 import { ProjectCard } from './components/catalog/ProjectCard';
+import { R3FCadViewer } from './components/viewers/R3FCadViewer';
 import { CertificatesSection } from './components/sections/CertificatesSection';
 import { TrainingSection } from './components/sections/TrainingSection';
 import { ContactSection } from './components/sections/ContactSection';
@@ -30,7 +42,10 @@ const CATEGORIES: CatalogCategory[] = [
 ];
 
 export function App() {
+  const activeView = useCatalogStore((s) => s.activeView);
+  const setActiveView = useCatalogStore((s) => s.setActiveView);
   const projects = useCatalogStore((s) => s.projects);
+  const certificates = useCatalogStore((s) => s.certificates);
   const brandConfig = useCatalogStore((s) => s.brandConfig);
   const selectedCategory = useCatalogStore((s) => s.selectedCategory);
   const setSelectedCategory = useCatalogStore((s) => s.setSelectedCategory);
@@ -42,14 +57,15 @@ export function App() {
   const copiedProjectId = useCatalogStore((s) => s.copiedProjectId);
   const markLinkCopied = useCatalogStore((s) => s.markLinkCopied);
   const syncFromUrl = useCatalogStore((s) => s.syncFromUrl);
+  const fetchLiveCatalog = useCatalogStore((s) => s.fetchLiveCatalog);
   const openAdminModal = useCatalogStore((s) => s.openAdminModal);
 
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [catalogLinkCopied, setCatalogLinkCopied] = useState(false);
 
   useEffect(() => {
     syncFromUrl();
-  }, [syncFromUrl]);
+    void fetchLiveCatalog();
+  }, [syncFromUrl, fetchLiveCatalog]);
 
   const filteredProjects = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -62,10 +78,15 @@ export function App() {
         p.subtitle.toLowerCase().includes(q) ||
         p.code.toLowerCase().includes(q) ||
         p.tags.some((t) => t.toLowerCase().includes(q)) ||
-        p.specs.material.toLowerCase().includes(q)
+        p.specs.software.toLowerCase().includes(q)
       );
     });
   }, [projects, selectedCategory, searchQuery]);
+
+  const featuredProject = useMemo(
+    () => projects.find((p) => p.featured) ?? projects[0] ?? null,
+    [projects]
+  );
 
   const selectedProject = useMemo(
     () => projects.find((p) => p.id === selectedProjectId) ?? null,
@@ -108,195 +129,347 @@ export function App() {
     setTimeout(() => setCatalogLinkCopied(false), 2500);
   };
 
+  const navItems: Array<{
+    id: CatalogViewTab;
+    label: string;
+    icon: React.FC<{ className?: string }>;
+    badge?: number;
+  }> = [
+    { id: 'portfolio', label: 'Catálogo de Trabajos', icon: Layers, badge: projects.length },
+    {
+      id: 'certificates',
+      label: 'Certificados Oficiales',
+      icon: ShieldCheck,
+      badge: certificates.length,
+    },
+    { id: 'training', label: 'Capacitación CSWA / CSWP', icon: GraduationCap },
+    { id: 'contact', label: 'Contacto Directo', icon: Mail },
+  ];
+
   return (
-    <div className="min-h-screen bg-cad-grid text-slate-100">
-      {/* Executive Client Navbar */}
-      <header className="fixed inset-x-0 top-0 z-30 border-b border-white/10 bg-[#050608]/88 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <a href="#" className="flex items-center gap-3">
+    <div className="min-h-screen bg-[#050608] text-slate-100 lg:flex">
+      {/* Desktop Left Architectural Sidebar Rail */}
+      <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:w-[290px] lg:flex-col lg:justify-between lg:border-r lg:border-white/10 lg:bg-[#080b10]">
+        <div className="p-6">
+          {/* Brand Identity */}
+          <div className="rounded-2xl border border-white/10 bg-[#050608] p-4">
             <img
               src="./cadco-logo.png"
               alt={brandConfig.brandName}
-              className="h-9 w-auto rounded-md bg-black object-contain px-1.5 py-0.5"
+              className="h-11 w-auto object-contain"
             />
-            <span className="hidden font-mono-tech text-[11px] tracking-wider text-[#5bb5b9] uppercase sm:inline">
-              Diseño CAD · SolidWorks CSWP
-            </span>
-          </a>
+            <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-[#5bb5b9]/30 bg-[#5bb5b9]/10 px-2.5 py-0.5 font-mono-tech text-[10px] font-medium text-[#5bb5b9]">
+              <Award className="h-3 w-3" />
+              <span>SolidWorks CSWA · CSWP</span>
+            </div>
+            <p className="mt-2.5 text-xs leading-relaxed text-slate-400">
+              Portafolio profesional de diseño CAD 3D, modelado mecánico, planimetría técnica y formación.
+            </p>
+          </div>
 
-          <nav className="hidden items-center gap-7 text-sm font-medium text-slate-300 md:flex">
-            <a href="#catalogo" className="transition hover:text-[#5bb5b9]">
-              Portafolio 3D
-            </a>
-            <a href="#certificados" className="transition hover:text-[#5bb5b9]">
-              Certificados
-            </a>
-            <a href="#capacitacion" className="transition hover:text-[#5bb5b9]">
-              Capacitaciones
-            </a>
-            <a href="#contacto" className="transition hover:text-[#5bb5b9]">
-              Cotizar
-            </a>
+          {/* Catalog Navigation */}
+          <nav className="mt-6 space-y-1.5" aria-label="Secciones del catálogo">
+            {navItems.map(({ id, label, icon: Icon, badge }) => {
+              const active = activeView === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setActiveView(id)}
+                  className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-left text-sm font-medium transition ${
+                    active
+                      ? 'border border-[#5bb5b9]/40 bg-[#5bb5b9]/15 text-white shadow-sm'
+                      : 'border border-transparent text-slate-400 hover:bg-white/[0.04] hover:text-slate-100'
+                  }`}
+                >
+                  <span className="flex items-center gap-2.5">
+                    <Icon
+                      className={`h-4 w-4 ${active ? 'text-[#5bb5b9]' : 'text-slate-500'}`}
+                    />
+                    <span>{label}</span>
+                  </span>
+                  {badge !== undefined && (
+                    <span
+                      className={`rounded-md px-1.5 py-0.5 font-mono-tech text-[10px] ${
+                        active
+                          ? 'bg-[#5bb5b9] font-bold text-slate-950'
+                          : 'bg-white/5 text-slate-400'
+                      }`}
+                    >
+                      {badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </nav>
+        </div>
+
+        {/* Sidebar Footer */}
+        <div className="space-y-3 border-t border-white/10 p-5">
+          <button
+            type="button"
+            onClick={handleCopyCatalogUrl}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#5bb5b9] px-4 py-2.5 text-xs font-semibold text-slate-950 transition hover:bg-[#4ea5a9]"
+          >
+            {catalogLinkCopied ? (
+              <>
+                <Check className="h-4 w-4" />
+                <span>¡Enlace Copiado!</span>
+              </>
+            ) : (
+              <>
+                <Share2 className="h-4 w-4" />
+                <span>Compartir Catálogo</span>
+              </>
+            )}
+          </button>
+
+          <div className="flex items-center justify-between pt-1 text-[11px] text-slate-500">
+            <span>© {new Date().getFullYear()} {brandConfig.brandName}</span>
+            <button
+              type="button"
+              onClick={openAdminModal}
+              aria-label="Acceso privado"
+              title="Acceso privado"
+              className="rounded p-1 text-slate-700 transition hover:text-slate-400"
+            >
+              <Lock className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      {/* Mobile Top Bar & Navigation */}
+      <header className="sticky top-0 z-30 border-b border-white/10 bg-[#080b10]/95 backdrop-blur-xl lg:hidden">
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-2.5">
+            <img
+              src="./cadco-logo.png"
+              alt={brandConfig.brandName}
+              className="h-8 w-auto rounded bg-black px-1.5 py-0.5 object-contain"
+            />
+            <span className="rounded border border-[#5bb5b9]/30 bg-[#5bb5b9]/10 px-2 py-0.5 font-mono-tech text-[10px] text-[#5bb5b9]">
+              CSWP
+            </span>
+          </div>
 
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={handleCopyCatalogUrl}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#5bb5b9] px-3.5 py-1.5 text-xs font-semibold text-slate-950 transition hover:bg-[#4ea5a9]"
+              className="inline-flex items-center gap-1 rounded-lg bg-[#5bb5b9] px-3 py-1.5 text-xs font-semibold text-slate-950"
             >
-              {catalogLinkCopied ? (
-                <>
-                  <Check className="h-3.5 w-3.5" />
-                  <span>¡Link Copiado!</span>
-                </>
-              ) : (
-                <>
-                  <Share2 className="h-3.5 w-3.5" />
-                  <span>Compartir Catálogo</span>
-                </>
-              )}
+              {catalogLinkCopied ? <Check className="h-3.5 w-3.5" /> : <Share2 className="h-3.5 w-3.5" />}
+              <span>{catalogLinkCopied ? 'Copiado' : 'Compartir'}</span>
             </button>
-
             <button
               type="button"
-              onClick={() => setMobileMenuOpen((v) => !v)}
-              aria-label="Menú"
-              className="rounded-lg border border-white/10 p-1.5 text-slate-300 md:hidden"
+              onClick={openAdminModal}
+              aria-label="Acceso privado"
+              className="rounded-lg p-1.5 text-slate-700"
             >
-              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              <Lock className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>
 
-        {/* Mobile Drawer */}
-        {mobileMenuOpen && (
-          <div className="border-t border-white/10 bg-[#0b0e13] px-4 py-4 md:hidden">
-            <div className="flex flex-col space-y-3 text-sm font-medium text-slate-200">
-              <a href="#catalogo" onClick={() => setMobileMenuOpen(false)}>
-                Portafolio 3D
-              </a>
-              <a href="#certificados" onClick={() => setMobileMenuOpen(false)}>
-                Certificados Oficiales
-              </a>
-              <a href="#capacitacion" onClick={() => setMobileMenuOpen(false)}>
-                Capacitaciones CSWA / CSWP
-              </a>
-              <a href="#contacto" onClick={() => setMobileMenuOpen(false)}>
-                Cotizar Proyecto
-              </a>
-            </div>
-          </div>
-        )}
+        {/* Mobile Tab Switcher */}
+        <div className="flex gap-1 overflow-x-auto border-t border-white/10 px-3 py-2">
+          {navItems.map(({ id, label, icon: Icon }) => {
+            const active = activeView === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setActiveView(id)}
+                className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                  active
+                    ? 'bg-[#5bb5b9] text-slate-950'
+                    : 'bg-white/5 text-slate-300'
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                <span>{label}</span>
+              </button>
+            );
+          })}
+        </div>
       </header>
 
-      <main>
-        <HeroSection />
+      {/* Main Catalog Workspace */}
+      <main className="flex-1 bg-cad-grid lg:pl-[290px]">
+        <div className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-10">
+          <AnimatePresence mode="wait">
+            {activeView === 'portfolio' && (
+              <motion.div
+                key="portfolio"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.22 }}
+                className="space-y-8"
+              >
+                {/* Featured 3D Engineering Dossier Banner */}
+                {featuredProject && (
+                  <section className="overflow-hidden rounded-2xl border border-[#5bb5b9]/30 bg-[#0b0e13]/95 shadow-2xl">
+                    <div className="grid items-stretch lg:grid-cols-12">
+                      <div className="flex flex-col justify-between p-6 sm:p-8 lg:col-span-6">
+                        <div>
+                          <div className="inline-flex items-center gap-2 rounded-full border border-[#5bb5b9]/35 bg-[#5bb5b9]/10 px-3 py-1 font-mono-tech text-[11px] font-medium text-[#5bb5b9]">
+                            <Award className="h-3.5 w-3.5" />
+                            <span>{brandConfig.heroBadge}</span>
+                          </div>
+                          <h1 className="mt-4 font-display text-2xl font-bold tracking-tight text-white sm:text-3xl">
+                            {brandConfig.heroTitlePrefix}{' '}
+                            <span className="text-[#5bb5b9]">{brandConfig.heroTitleHighlight}</span>{' '}
+                            {brandConfig.heroTitleSuffix}
+                          </h1>
+                          <p className="mt-3 text-sm leading-relaxed text-slate-300">
+                            {brandConfig.heroSubtitle}
+                          </p>
+                        </div>
 
-        {/* Catalog Grid Section */}
-        <section id="catalogo" className="py-16 sm:py-24">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
-              <div>
-                <span className="font-mono-tech text-xs font-semibold tracking-wider text-[#5bb5b9] uppercase">
-                  Portafolio Técnico Interactivo
-                </span>
-                <h2 className="mt-2 font-display text-3xl font-bold text-white sm:text-4xl">
-                  Trabajos Realizados & Planimetría
-                </h2>
-                <p className="mt-2 max-w-2xl text-sm text-slate-300 sm:text-base">
-                  Selecciona cualquier proyecto para inspeccionar el <strong className="text-white">modelo 3D en tiempo real</strong>, revisar su galería de planos técnicos y consultar las tolerancias de manufactura.
-                </p>
-              </div>
+                        <div className="mt-6 flex flex-wrap items-center gap-3 border-t border-white/10 pt-5">
+                          <button
+                            type="button"
+                            onClick={() => handleOpen3D(featuredProject.id)}
+                            className="inline-flex items-center gap-2 rounded-xl bg-[#5bb5b9] px-4 py-2.5 text-xs font-semibold text-slate-950 transition hover:bg-[#4ea5a9]"
+                          >
+                            <Box className="h-4 w-4" />
+                            Inspeccionar Trabajo Destacado
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setActiveView('certificates')}
+                            className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-xs font-medium text-white transition hover:border-[#5bb5b9]/50"
+                          >
+                            <ShieldCheck className="h-4 w-4 text-[#5bb5b9]" />
+                            Ver Certificados
+                          </button>
+                        </div>
+                      </div>
 
-              <div className="relative w-full lg:w-80">
-                <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Buscar pieza, código, material..."
-                  className="w-full rounded-xl border border-white/15 bg-[#0b0e13] py-2.5 pr-4 pl-10 text-sm text-white placeholder-slate-500 outline-none focus:border-[#5bb5b9]"
-                />
-              </div>
-            </div>
+                      {/* Live 3D Preview Stage */}
+                      <div className="relative h-[280px] border-t border-white/10 bg-[#070a0f] sm:h-[320px] lg:col-span-6 lg:h-auto lg:min-h-[340px] lg:border-t-0 lg:border-l">
+                        <R3FCadViewer
+                          modelType={featuredProject.modelType}
+                          exploded={false}
+                          wireframe={false}
+                          autoRotate={true}
+                          compact={true}
+                        />
+                        <div className="pointer-events-none absolute top-3 left-3 rounded-lg border border-white/10 bg-black/75 px-2.5 py-1 font-mono-tech text-[10px] text-[#5bb5b9] backdrop-blur-sm">
+                          VISTA 3D INTERACTIVA · {featuredProject.code}
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+                )}
 
-            <div className="mt-7 flex flex-wrap gap-2">
-              {CATEGORIES.map((cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`rounded-xl px-4 py-2 text-xs font-semibold transition ${
-                    selectedCategory === cat
-                      ? 'bg-[#5bb5b9] text-slate-950 shadow-md shadow-[#5bb5b9]/20'
-                      : 'border border-white/10 bg-[#0b0e13] text-slate-300 hover:border-[#5bb5b9]/40 hover:text-white'
-                  }`}
-                >
-                  {CATEGORY_LABELS[cat]}
-                </button>
-              ))}
-            </div>
+                {/* Filter & Search Toolbar */}
+                <div className="flex flex-col justify-between gap-4 border-b border-white/10 pb-5 sm:flex-row sm:items-center">
+                  <div className="flex flex-wrap gap-2">
+                    {CATEGORIES.map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => setSelectedCategory(cat)}
+                        className={`rounded-xl px-3.5 py-2 text-xs font-semibold transition ${
+                          selectedCategory === cat
+                            ? 'bg-[#5bb5b9] text-slate-950'
+                            : 'border border-white/10 bg-[#0b0e13] text-slate-300 hover:border-[#5bb5b9]/40 hover:text-white'
+                        }`}
+                      >
+                        {CATEGORY_LABELS[cat]}
+                      </button>
+                    ))}
+                  </div>
 
-            {filteredProjects.length === 0 ? (
-              <div className="mt-12 rounded-2xl border border-white/10 bg-[#0b0e13]/80 p-12 text-center">
-                <p className="text-slate-300">
-                  No se encontraron trabajos con ese criterio.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedCategory('all');
-                    setSearchQuery('');
-                  }}
-                  className="mt-4 rounded-lg bg-[#5bb5b9] px-4 py-2 text-xs font-semibold text-slate-950"
-                >
-                  Mostrar Todos
-                </button>
-              </div>
-            ) : (
-              <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {filteredProjects.map((project) => (
-                  <ProjectCard
-                    key={project.id}
-                    project={project}
-                    isCopied={copiedProjectId === project.id}
-                    onOpen3D={handleOpen3D}
-                    onOpenPhoto={handleOpenPhoto}
-                    onCopyLink={handleCopyProjectLink}
-                  />
-                ))}
-              </div>
+                  <div className="relative w-full sm:w-72">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Buscar trabajo, código, norma..."
+                      className="w-full rounded-xl border border-white/15 bg-[#0b0e13] py-2 pr-4 pl-9 text-xs text-white placeholder-slate-500 outline-none focus:border-[#5bb5b9]"
+                    />
+                  </div>
+                </div>
+
+                {/* Portfolio Grid */}
+                {filteredProjects.length === 0 ? (
+                  <div className="rounded-2xl border border-white/10 bg-[#0b0e13]/80 p-12 text-center">
+                    <p className="text-sm text-slate-300">
+                      No se encontraron trabajos con ese criterio.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedCategory('all');
+                        setSearchQuery('');
+                      }}
+                      className="mt-4 rounded-lg bg-[#5bb5b9] px-4 py-2 text-xs font-semibold text-slate-950"
+                    >
+                      Mostrar Todos
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                    {filteredProjects.map((project) => (
+                      <ProjectCard
+                        key={project.id}
+                        project={project}
+                        isCopied={copiedProjectId === project.id}
+                        onOpen3D={handleOpen3D}
+                        onOpenPhoto={handleOpenPhoto}
+                        onCopyLink={handleCopyProjectLink}
+                      />
+                    ))}
+                  </div>
+                )}
+              </motion.div>
             )}
-          </div>
-        </section>
 
-        <CertificatesSection />
-        <TrainingSection />
-        <ContactSection />
-      </main>
+            {activeView === 'certificates' && (
+              <motion.div
+                key="certificates"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.22 }}
+              >
+                <CertificatesSection />
+              </motion.div>
+            )}
 
-      {/* Clean Executive Footer with Discreet Owner Lock */}
-      <footer className="border-t border-white/10 bg-[#050608] py-8">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 text-xs text-slate-400 sm:flex-row sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <img src="./cadco-logo.png" alt={brandConfig.brandName} className="h-6 w-auto" />
-            <span>
-              © {new Date().getFullYear()} {brandConfig.brandName} Engineering · Diseño CAD, Modelado Mecánico & Capacitación SolidWorks
-            </span>
-          </div>
+            {activeView === 'training' && (
+              <motion.div
+                key="training"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.22 }}
+              >
+                <TrainingSection />
+              </motion.div>
+            )}
 
-          <button
-            type="button"
-            onClick={openAdminModal}
-            aria-label="Acceso privado"
-            title="Acceso privado"
-            className="rounded-md p-1.5 text-slate-700 transition hover:text-slate-400"
-          >
-            <Lock className="h-3.5 w-3.5" />
-          </button>
+            {activeView === 'contact' && (
+              <motion.div
+                key="contact"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.22 }}
+              >
+                <ContactSection />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-      </footer>
+      </main>
 
       <Suspense fallback={null}>
         {selectedProject && (

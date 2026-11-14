@@ -99,6 +99,9 @@ export const AdminStudioModal: React.FC = () => {
   const updateTrainingTrack = useCatalogStore((s) => s.updateTrainingTrack);
   const importSnapshot = useCatalogStore((s) => s.importSnapshot);
   const resetToDefaults = useCatalogStore((s) => s.resetToDefaults);
+  const githubToken = useCatalogStore((s) => s.githubToken);
+  const setGithubToken = useCatalogStore((s) => s.setGithubToken);
+  const publishLiveToGitHub = useCatalogStore((s) => s.publishLiveToGitHub);
 
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState(false);
@@ -107,6 +110,8 @@ export const AdminStudioModal: React.FC = () => {
   const [editingCert, setEditingCert] = useState<DigitalCertificate | null>(null);
   const [conversionStatus, setConversionStatus] = useState<string | null>(null);
   const [savedFeedback, setSavedFeedback] = useState<string | null>(null);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
 
   const backupInputRef = useRef<HTMLInputElement>(null);
 
@@ -317,7 +322,7 @@ export const AdminStudioModal: React.FC = () => {
             { id: 'projects', label: `Proyectos CAD (${projects.length})`, icon: Box },
             { id: 'certificates', label: `Certificados (${certificates.length})`, icon: Award },
             { id: 'brand', label: 'Marca, Textos & Capacitación', icon: Settings },
-            { id: 'backup', label: 'Respaldo JSON', icon: Download },
+            { id: 'backup', label: 'Publicar en Vivo & Respaldo', icon: Upload },
           ].map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -951,43 +956,96 @@ export const AdminStudioModal: React.FC = () => {
             </div>
           )}
 
-          {/* TAB 4: BACKUP */}
+          {/* TAB 4: PUBLISH LIVE & BACKUP */}
           {activeTab === 'backup' && (
-            <div className="max-w-2xl space-y-5">
-              <p className="text-sm text-slate-300">
-                Todos tus cambios se guardan automáticamente en este navegador. Para respaldar tu catálogo o migrarlo a otro equipo, exporta o importa un archivo JSON:
-              </p>
+            <div className="max-w-2xl space-y-6">
+              <div className="rounded-xl border border-[#5bb5b9]/35 bg-[#070a0f] p-5">
+                <h4 className="font-display text-base font-bold text-white">
+                  Publicar en Tiempo Real para Todos tus Clientes
+                </h4>
+                <p className="mt-1.5 text-xs leading-relaxed text-slate-300">
+                  Tus cambios se guardan primero en este equipo. Para que <strong className="text-white">cualquier cliente que abra tu link</strong> vea inmediatamente los nuevos proyectos, fotos <span className="text-[#5bb5b9]">.webp</span>, archivos 3D y certificados, pega una vez tu GitHub Personal Access Token (con permiso <em>Contents: Read &amp; Write</em> en <code>Catalogo-CADCO</code>) y presiona <strong>Publicar en Vivo</strong>.
+                </p>
 
-              <div className="flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  onClick={handleExportBackup}
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#5bb5b9] px-4 py-2.5 text-xs font-semibold text-slate-950"
-                >
-                  <Download className="h-4 w-4" />
-                  Descargar Respaldo (.JSON)
-                </button>
+                <div className="mt-4 space-y-3">
+                  <div>
+                    <label className="mb-1 block text-xs text-slate-400">
+                      GitHub Token (se guarda solo en tu navegador)
+                    </label>
+                    <input
+                      type="password"
+                      value={githubToken}
+                      onChange={(e) => {
+                        setGithubToken(e.target.value);
+                        setPublishError(null);
+                      }}
+                      placeholder="github_pat_... o ghp_..."
+                      className="w-full rounded-lg border border-white/15 bg-[#050608] px-3 py-2 font-mono-tech text-xs text-white"
+                    />
+                  </div>
 
-                <button
-                  type="button"
-                  onClick={() => backupInputRef.current?.click()}
-                  className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-xs font-medium text-white hover:border-[#5bb5b9]"
-                >
-                  <Upload className="h-4 w-4 text-[#5bb5b9]" />
-                  Restaurar desde (.JSON)
-                </button>
+                  {publishError && (
+                    <p className="text-xs text-rose-400">{publishError}</p>
+                  )}
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    resetToDefaults();
-                    showSavedToast('Catálogo restaurado a valores iniciales.');
-                  }}
-                  className="inline-flex items-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2.5 text-xs font-medium text-rose-300"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                  Restablecer Catálogo Base
-                </button>
+                  <button
+                    type="button"
+                    disabled={isPublishing}
+                    onClick={async () => {
+                      setIsPublishing(true);
+                      setPublishError(null);
+                      try {
+                        await publishLiveToGitHub();
+                        showSavedToast('¡Catálogo publicado en vivo para todos los clientes!');
+                      } catch (err) {
+                        setPublishError(
+                          err instanceof Error ? err.message : 'Error al publicar en GitHub.'
+                        );
+                      } finally {
+                        setIsPublishing(false);
+                      }
+                    }}
+                    className="inline-flex items-center gap-2 rounded-xl bg-[#5bb5b9] px-5 py-2.5 text-xs font-semibold text-slate-950 transition hover:bg-[#4ea5a9] disabled:opacity-50"
+                  >
+                    <Upload className="h-4 w-4" />
+                    {isPublishing ? 'Publicando en vivo...' : 'Publicar Cambios en Vivo Ahora'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-3 border-t border-white/10 pt-5">
+                <h4 className="text-sm font-bold text-white">Respaldo Local (.JSON)</h4>
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={handleExportBackup}
+                    className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-xs font-semibold text-white hover:border-[#5bb5b9]"
+                  >
+                    <Download className="h-4 w-4 text-[#5bb5b9]" />
+                    Descargar Respaldo (.JSON)
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => backupInputRef.current?.click()}
+                    className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-xs font-medium text-white hover:border-[#5bb5b9]"
+                  >
+                    <Upload className="h-4 w-4 text-[#5bb5b9]" />
+                    Restaurar desde (.JSON)
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      resetToDefaults();
+                      showSavedToast('Catálogo restaurado a valores iniciales.');
+                    }}
+                    className="inline-flex items-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2.5 text-xs font-medium text-rose-300"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    Restablecer Catálogo Base
+                  </button>
+                </div>
               </div>
 
               <input

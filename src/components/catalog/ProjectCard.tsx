@@ -98,18 +98,18 @@ export const ProjectCard: React.FC<ProjectCardProps> = React.memo(
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div>
                 <span className="block text-[10px] tracking-wider text-slate-500 uppercase">
-                  Material
+                  Software
                 </span>
                 <span className="font-mono-tech text-[11px] text-slate-200">
-                  {project.specs.material.split('/')[0].trim()}
+                  {project.specs.software.split('+')[0].trim()}
                 </span>
               </div>
               <div>
                 <span className="block text-[10px] tracking-wider text-slate-500 uppercase">
-                  Tolerancia
+                  Normativa
                 </span>
                 <span className="font-mono-tech text-[11px] text-[#5bb5b9]">
-                  {project.specs.tolerancia.split('|')[0].trim()}
+                  {project.specs.norma.split('/')[0].trim()}
                 </span>
               </div>
             </div>

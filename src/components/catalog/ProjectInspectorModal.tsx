@@ -37,6 +37,7 @@ export const ProjectInspectorModal: React.FC<ProjectInspectorModalProps> = ({ pr
   const setActivePhotoIndex = useCatalogStore((s) => s.setActivePhotoIndex);
   const copiedProjectId = useCatalogStore((s) => s.copiedProjectId);
   const markLinkCopied = useCatalogStore((s) => s.markLinkCopied);
+  const setActiveView = useCatalogStore((s) => s.setActiveView);
 
   const [viewMode, setViewMode] = useState<'3d' | 'photos'>(
     activePhotoIndex > 0 ? 'photos' : '3d'
@@ -315,12 +316,12 @@ export const ProjectInspectorModal: React.FC<ProjectInspectorModalProps> = ({ pr
                 </h4>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {[
-                    ['Material', project.specs.material],
-                    ['Tolerancia', project.specs.tolerancia],
+                    ['Material Referencia', project.specs.material],
+                    ['Tolerancias / Ajuste', project.specs.tolerancia],
                     ['Software CAD', project.specs.software],
                     ['Normativa', project.specs.norma],
-                    ['Manufactura', project.specs.proceso],
-                    ['Entrega Est.', project.specs.tiempoEntrega],
+                    ['Enfoque Técnico', project.specs.proceso],
+                    ['Complejidad', project.specs.tiempoEntrega],
                   ].map(([label, val]) => (
                     <div
                       key={label}
@@ -355,14 +356,17 @@ export const ProjectInspectorModal: React.FC<ProjectInspectorModalProps> = ({ pr
             </div>
 
             <div className="mt-6 flex flex-wrap gap-2.5 border-t border-white/10 pt-4">
-              <a
-                href="#contacto"
-                onClick={onClose}
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveView('contact');
+                  onClose();
+                }}
                 className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#5bb5b9] px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-[#4ea5a9]"
               >
                 <MessageSquare className="h-4 w-4" />
-                Cotizar Trabajo Similar
-              </a>
+                Consultar Proyecto Similar
+              </button>
               <button
                 type="button"
                 onClick={handleCopyShareLink}
