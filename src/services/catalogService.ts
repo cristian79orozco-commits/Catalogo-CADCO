@@ -6,6 +6,8 @@ import type {
   CertificationTrack,
   CustomCadFile,
   DigitalCertificate,
+  HeroShowcaseMode,
+  HeroVideoFile,
 } from '../types';
 
 export interface RemoteCatalogSnapshot {
@@ -71,6 +73,8 @@ interface BrandConfigRow {
   contact_email: string;
   whatsapp_number: string;
   hero_cad_file?: CustomCadFile | null;
+  hero_video_file?: HeroVideoFile | null;
+  hero_showcase_mode?: HeroShowcaseMode | null;
 }
 
 function mapProjectToRow(project: CatalogProject, sortOrder = 0): ProjectRow {
@@ -181,6 +185,8 @@ function mapBrandToRow(config: BrandConfig): BrandConfigRow {
     contact_email: config.contactEmail,
     whatsapp_number: config.whatsappNumber,
     hero_cad_file: config.heroCadFile ?? null,
+    hero_video_file: config.heroVideoFile ?? null,
+    hero_showcase_mode: config.heroShowcaseMode ?? 'auto',
   };
 }
 
@@ -198,6 +204,8 @@ function mapRowToBrand(row: BrandConfigRow): BrandConfig {
     whatsappNumber: row.whatsapp_number,
     adminPin: DEFAULT_BRAND_CONFIG.adminPin,
     ...(row.hero_cad_file ? { heroCadFile: row.hero_cad_file } : {}),
+    ...(row.hero_video_file ? { heroVideoFile: row.hero_video_file } : {}),
+    heroShowcaseMode: row.hero_showcase_mode ?? 'auto',
   };
 }
 

@@ -19,6 +19,7 @@ import type { CatalogCategory } from './types';
 import { ProjectCard } from './components/catalog/ProjectCard';
 import { R3FCadViewer } from './components/viewers/R3FCadViewer';
 import { CustomCadFileViewer } from './components/viewers/CustomCadFileViewer';
+import { HeroVideoShowcase } from './components/viewers/HeroVideoShowcase';
 import { CertificatesSection } from './components/sections/CertificatesSection';
 import { TrainingSection } from './components/sections/TrainingSection';
 import { ContactSection } from './components/sections/ContactSection';
@@ -360,26 +361,46 @@ export function App() {
                         </div>
                       </div>
 
-                      {/* Live 3D Preview Stage */}
-                      <div className="relative h-[280px] overflow-hidden border-t border-white/10 bg-[#070a0f] sm:h-[320px] lg:col-span-6 lg:h-[380px] lg:border-t-0 lg:border-l">
-                        {brandConfig.heroCadFile || featuredProject.customCadFile ? (
-                          <CustomCadFileViewer
-                            cadFile={(brandConfig.heroCadFile ?? featuredProject.customCadFile)!}
-                          />
-                        ) : (
-                          <R3FCadViewer
-                            modelType={featuredProject.modelType}
-                            exploded={false}
-                            wireframe={false}
-                            autoRotate={true}
-                            compact={true}
-                          />
-                        )}
-                        <div className="pointer-events-none absolute top-3 left-3 rounded-lg border border-white/10 bg-black/75 px-2.5 py-1 font-mono-tech text-[10px] text-[#5bb5b9] backdrop-blur-sm">
-                          VISTA 3D INTERACTIVA ·{' '}
-                          {brandConfig.heroCadFile ? 'MODELO PRINCIPAL' : featuredProject.code}
-                        </div>
-                      </div>
+                      {/* Live Featured Showcase Stage (Video / 3D CAD / Procedural) */}
+                      {(() => {
+                        const mode = brandConfig.heroShowcaseMode ?? 'auto';
+                        const hasVideo = Boolean(brandConfig.heroVideoFile);
+                        const cadFile = brandConfig.heroCadFile ?? featuredProject.customCadFile;
+
+                        const showVideo =
+                          (mode === 'video' && hasVideo) || (mode === 'auto' && hasVideo);
+                        const showCustomCad =
+                          !showVideo &&
+                          Boolean(cadFile) &&
+                          (mode === 'cad3d' || mode === 'auto');
+
+                        return (
+                          <div className="relative h-[280px] overflow-hidden border-t border-white/10 bg-[#070a0f] sm:h-[320px] lg:col-span-6 lg:h-[380px] lg:border-t-0 lg:border-l">
+                            {showVideo && brandConfig.heroVideoFile ? (
+                              <HeroVideoShowcase video={brandConfig.heroVideoFile} />
+                            ) : showCustomCad && cadFile ? (
+                              <CustomCadFileViewer cadFile={cadFile} />
+                            ) : (
+                              <R3FCadViewer
+                                modelType={featuredProject.modelType}
+                                exploded={false}
+                                wireframe={false}
+                                autoRotate={true}
+                                compact={true}
+                              />
+                            )}
+                            <div className="pointer-events-none absolute top-3 left-3 z-20 rounded-lg border border-white/10 bg-black/75 px-2.5 py-1 font-mono-tech text-[10px] text-[#5bb5b9] backdrop-blur-sm">
+                              {showVideo
+                                ? `VIDEO DESTACADO · ${featuredProject.code}`
+                                : `VISTA 3D INTERACTIVA · ${
+                                    brandConfig.heroCadFile
+                                      ? 'MODELO PRINCIPAL'
+                                      : featuredProject.code
+                                  }`}
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </section>
                 )}

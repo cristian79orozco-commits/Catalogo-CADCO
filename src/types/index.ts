@@ -30,6 +30,19 @@ export interface CustomCadFile {
   dataUrl: string;
 }
 
+export interface HeroVideoFile {
+  name: string;
+  mimeType: string;
+  dataUrl: string;
+  width: number;
+  height: number;
+  durationSec: number;
+  originalSizeKb: number;
+  optimizedSizeKb: number;
+}
+
+export type HeroShowcaseMode = 'auto' | 'video' | 'cad3d' | 'procedural';
+
 export interface TechnicalSpec {
   material: string;
   tolerancia: string;
@@ -92,4 +105,6 @@ export interface BrandConfig {
   whatsappNumber: string;
   adminPin: string;
   heroCadFile?: CustomCadFile;
+  heroVideoFile?: HeroVideoFile;
+  heroShowcaseMode?: HeroShowcaseMode;
 }

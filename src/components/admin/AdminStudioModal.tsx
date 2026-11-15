@@ -18,6 +18,7 @@ import {
   Eye,
   EyeOff,
   FileCode2,
+  Film,
   FolderPlus,
   ImagePlus,
   KeyRound,
@@ -39,6 +40,8 @@ import {
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { useCatalogStore } from '../../store/useCatalogStore';
 import { convertImageToWebp, readFileAsDataUrl } from '../../utils/imageConverter';
+import { optimizeVideoForHero } from '../../utils/videoOptimizer';
+import { HeroVideoShowcase } from '../viewers/HeroVideoShowcase';
 import type {
   BrandConfig,
   CadModelType,
@@ -48,9 +51,10 @@ import type {
   CustomCadFile,
   DigitalCertificate,
   GalleryPhoto,
+  HeroShowcaseMode,
 } from '../../types';
 
-type AdminTab = 'projects' | 'certificates' | 'brand' | 'backup';
+type AdminTab = 'projects' | 'featured' | 'certificates' | 'brand' | 'backup';
 
 const MODEL_PRESETS: Array<{ value: CadModelType; label: string }> = [
   { value: 'planetary-gear', label: 'Reductor Planetario 4:1' },
@@ -147,6 +151,7 @@ export const AdminStudioModal: React.FC = () => {
   const [draftBrand, setDraftBrand] = useState<BrandConfig>(brandConfig);
   const [draftTracks, setDraftTracks] = useState<CertificationTrack[]>(trainingTracks);
   const [isBrandDirty, setIsBrandDirty] = useState(false);
+  const [videoProgress, setVideoProgress] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [conversionStatus, setConversionStatus] = useState<string | null>(null);
@@ -260,6 +265,39 @@ export const AdminStudioModal: React.FC = () => {
     notifySuccess(`Modelo 3D principal "${file.name}" cargado. Guarda los cambios para publicarlo en el Hero.`);
   };
 
+  const handleHeroVideoUpload = async (file: File | undefined) => {
+    if (!file) return;
+    setVideoProgress(0);
+    try {
+      const optimized = await optimizeVideoForHero(file, (pct) => setVideoProgress(pct));
+      setDraftBrand((prev) => ({
+        ...prev,
+        heroVideoFile: {
+          name: optimized.name,
+          mimeType: optimized.mimeType,
+          dataUrl: optimized.dataUrl,
+          width: optimized.width,
+          height: optimized.height,
+          durationSec: optimized.durationSec,
+          originalSizeKb: optimized.originalSizeKb,
+          optimizedSizeKb: optimized.optimizedSizeKb,
+        },
+        heroShowcaseMode: 'video',
+      }));
+      setIsBrandDirty(true);
+      setConversionStatus(
+        `Video optimizado (${optimized.width}×${optimized.height}): ${optimized.originalSizeKb}KB → ${optimized.optimizedSizeKb}KB (-${optimized.savingsPercent}%)`
+      );
+      notifySuccess(
+        `Video convertido y optimizado (-${optimized.savingsPercent}%). Guarda para publicarlo.`
+      );
+    } catch (err) {
+      notifyError(err instanceof Error ? err.message : 'No se pudo procesar el video.');
+    } finally {
+      setVideoProgress(null);
+    }
+  };
+
   const handleCertImageUpload = async (file: File | undefined) => {
     if (!file || !editingCert) return;
     const res = await convertImageToWebp(file, 1600, 0.88);
@@ -312,6 +350,12 @@ export const AdminStudioModal: React.FC = () => {
       shortLabel: 'Proyectos',
       icon: Box,
       count: projects.length,
+    },
+    {
+      id: 'featured',
+      label: 'Trabajo Destacado',
+      shortLabel: 'Destacado',
+      icon: Sparkles,
     },
     {
       id: 'certificates',
@@ -561,7 +605,7 @@ export const AdminStudioModal: React.FC = () => {
                     <DialogTitle className="truncate font-display text-sm font-bold text-white sm:text-base">
                       {navTabs.find((t) => t.id === activeTab)?.label}
                     </DialogTitle>
-                    {isBrandDirty && activeTab === 'brand' && (
+                    {isBrandDirty && (activeTab === 'brand' || activeTab === 'featured') && (
                       <span className="hidden rounded-full border border-amber-500/35 bg-amber-500/10 px-2.5 py-0.5 font-mono-tech text-[10px] text-amber-300 sm:inline-flex">
                         Sin guardar
                       </span>
@@ -1386,6 +1430,264 @@ export const AdminStudioModal: React.FC = () => {
                     </motion.div>
                   )}
 
+                  {/* TAB 2: TRABAJO DESTACADO (VITRINA HERO EXCLUSIVA) */}
+                  {activeTab === 'featured' && (
+                    <motion.div
+                      key="featured-tab"
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      transition={{ duration: 0.16 }}
+                      className="space-y-5"
+                    >
+                      <section className="space-y-4 rounded-2xl border border-[#5bb5b9]/25 bg-[#0b0e13]/95 p-4 sm:p-5">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                          <div>
+                            <h4 className="font-display text-sm font-bold text-white sm:text-base">
+                              Visualizador Exclusivo · Trabajo Destacado (Hero)
+                            </h4>
+                            <p className="mt-1 text-xs leading-relaxed text-slate-400">
+                              Configura qué se muestra en la vitrina principal del catálogo. Puedes subir un video en cualquier formato estándar (se convierte automáticamente a WebM optimizado) o un modelo 3D propio.
+                            </p>
+                          </div>
+                          {isBrandDirty ? (
+                            <span className="inline-flex w-fit shrink-0 items-center rounded-full border border-amber-500/35 bg-amber-500/10 px-2.5 py-0.5 font-mono-tech text-[11px] text-amber-300">
+                              Cambios sin guardar
+                            </span>
+                          ) : (
+                            <span className="inline-flex w-fit shrink-0 items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 font-mono-tech text-[11px] text-emerald-300">
+                              Sincronizado
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Modo activo del visualizador Hero */}
+                        <div className="space-y-2">
+                          <label className="block text-xs font-medium text-slate-300">
+                            Modo de Visualización del Hero
+                          </label>
+                          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                            {(
+                              [
+                                { id: 'auto', label: 'Automático', desc: 'Prioriza Video → 3D' },
+                                { id: 'video', label: 'Video WebM', desc: 'Solo video optimizado' },
+                                { id: 'cad3d', label: 'Modelo 3D', desc: 'Archivo 3D propio' },
+                                { id: 'procedural', label: 'Base CAD', desc: 'Mecanismo interactivo' },
+                              ] as Array<{ id: HeroShowcaseMode; label: string; desc: string }>
+                            ).map((opt) => {
+                              const active = (draftBrand.heroShowcaseMode ?? 'auto') === opt.id;
+                              return (
+                                <button
+                                  key={opt.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setDraftBrand({ ...draftBrand, heroShowcaseMode: opt.id });
+                                    setIsBrandDirty(true);
+                                  }}
+                                  className={`min-h-[44px] rounded-xl border px-3 py-2 text-left transition ${
+                                    active
+                                      ? 'border-[#5bb5b9] bg-[#5bb5b9]/15 text-white'
+                                      : 'border-white/10 bg-[#070a0f] text-slate-400 hover:border-white/25 hover:text-slate-200'
+                                  }`}
+                                >
+                                  <div className="font-display text-xs font-semibold text-white">
+                                    {opt.label}
+                                  </div>
+                                  <div className="mt-0.5 text-[10px] text-slate-400">{opt.desc}</div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Video Destacado del Hero */}
+                        <div className="space-y-3 rounded-xl border border-white/10 bg-[#070a0f] p-4">
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="min-w-0 space-y-1">
+                              <div className="flex items-center gap-2">
+                                <Film className="h-4 w-4 shrink-0 text-[#5bb5b9]" />
+                                <h5 className="font-display text-xs font-bold uppercase tracking-wider text-white sm:text-sm">
+                                  Video del Trabajo Destacado (Conversión Automática)
+                                </h5>
+                              </div>
+                              <p className="text-xs leading-relaxed text-slate-400">
+                                Acepta cualquier formato estándar (.MP4, .MOV, .WEBM, .AVI, .MKV, .M4V). Al subirlo se convierte y comprime automáticamente a <span className="font-mono-tech text-[#5bb5b9]">.WebM 720p</span> para máxima fluidez y mínimo peso en base de datos.
+                              </p>
+                              {draftBrand.heroVideoFile && (
+                                <p className="font-mono-tech text-[11px] text-emerald-300">
+                                  Activo: {draftBrand.heroVideoFile.name} ·{' '}
+                                  {draftBrand.heroVideoFile.width}×{draftBrand.heroVideoFile.height} ·{' '}
+                                  {draftBrand.heroVideoFile.optimizedSizeKb} KB (antes{' '}
+                                  {draftBrand.heroVideoFile.originalSizeKb} KB)
+                                </p>
+                              )}
+                            </div>
+
+                            <div className="flex shrink-0 flex-wrap items-center gap-2">
+                              <label
+                                className={`inline-flex min-h-[40px] cursor-pointer items-center gap-1.5 rounded-xl border border-[#5bb5b9]/40 bg-[#5bb5b9]/15 px-3.5 py-2 text-xs font-semibold text-[#5bb5b9] transition hover:bg-[#5bb5b9]/25 ${
+                                  videoProgress !== null ? 'pointer-events-none opacity-60' : ''
+                                }`}
+                              >
+                                <Upload className="h-3.5 w-3.5" />
+                                {videoProgress !== null
+                                  ? `Convirtiendo ${videoProgress}%...`
+                                  : draftBrand.heroVideoFile
+                                    ? 'Cambiar Video'
+                                    : 'Subir Video'}
+                                <input
+                                  type="file"
+                                  accept="video/*,.mp4,.mov,.webm,.avi,.mkv,.m4v,.ogv"
+                                  className="hidden"
+                                  disabled={videoProgress !== null}
+                                  onChange={(e) => {
+                                    void handleHeroVideoUpload(e.target.files?.[0]);
+                                    e.target.value = '';
+                                  }}
+                                />
+                              </label>
+                              {draftBrand.heroVideoFile && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setDraftBrand({
+                                      ...draftBrand,
+                                      heroVideoFile: undefined,
+                                      heroShowcaseMode:
+                                        draftBrand.heroShowcaseMode === 'video'
+                                          ? 'auto'
+                                          : draftBrand.heroShowcaseMode,
+                                    });
+                                    setIsBrandDirty(true);
+                                    notifySuccess('Video destacado retirado. Guarda para aplicar.');
+                                  }}
+                                  className="inline-flex min-h-[40px] items-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-300 transition hover:bg-rose-500/20"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                  Quitar
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          {videoProgress !== null && (
+                            <div className="space-y-1.5 pt-1">
+                              <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+                                <div
+                                  className="h-full rounded-full bg-[#5bb5b9] transition-all duration-200"
+                                  style={{ width: `${videoProgress}%` }}
+                                />
+                              </div>
+                              <p className="font-mono-tech text-[10px] text-slate-400">
+                                Optimizando fotogramas y compresión WebM para el catálogo... {videoProgress}%
+                              </p>
+                            </div>
+                          )}
+
+                          {draftBrand.heroVideoFile && (
+                            <div className="h-[200px] overflow-hidden rounded-xl border border-white/10 sm:h-[240px]">
+                              <HeroVideoShowcase video={draftBrand.heroVideoFile} />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Modelo 3D Principal del Hero */}
+                        <div className="rounded-xl border border-white/10 bg-[#070a0f] p-4">
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="min-w-0 space-y-1">
+                              <div className="flex items-center gap-2">
+                                <Box className="h-4 w-4 shrink-0 text-[#5bb5b9]" />
+                                <h5 className="font-display text-xs font-bold uppercase tracking-wider text-white sm:text-sm">
+                                  Modelo 3D Principal del Hero
+                                </h5>
+                              </div>
+                              <p className="text-xs leading-relaxed text-slate-400">
+                                Sube un ensamble o pieza (.GLB, .GLTF, .STEP, .STL, .OBJ, .IGES) con colores y texturas reales para mostrarlo cuando no haya video activo.
+                              </p>
+                              <p className="font-mono-tech text-[11px] text-[#5bb5b9]">
+                                {draftBrand.heroCadFile
+                                  ? `Activo: ${draftBrand.heroCadFile.name}`
+                                  : 'Sin modelo 3D propio · Se usará el archivo 3D del proyecto destacado o el mecanismo base.'}
+                              </p>
+                            </div>
+
+                            <div className="flex shrink-0 flex-wrap items-center gap-2">
+                              <label className="inline-flex min-h-[40px] cursor-pointer items-center gap-1.5 rounded-xl border border-[#5bb5b9]/40 bg-[#5bb5b9]/15 px-3.5 py-2 text-xs font-semibold text-[#5bb5b9] transition hover:bg-[#5bb5b9]/25">
+                                <Upload className="h-3.5 w-3.5" />
+                                {draftBrand.heroCadFile ? 'Cambiar Modelo 3D' : 'Subir Modelo 3D'}
+                                <input
+                                  type="file"
+                                  accept=".stp,.step,.igs,.iges,.stl,.obj,.3ds,.gltf,.glb"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    void handleHeroCadUpload(e.target.files?.[0]);
+                                    e.target.value = '';
+                                  }}
+                                />
+                              </label>
+                              {draftBrand.heroCadFile && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setDraftBrand({ ...draftBrand, heroCadFile: undefined });
+                                    setIsBrandDirty(true);
+                                    notifySuccess('Modelo 3D principal retirado. Guarda para aplicar.');
+                                  }}
+                                  className="inline-flex min-h-[40px] items-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-300 transition hover:bg-rose-500/20"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                  Quitar
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </section>
+
+                      <div className="sticky bottom-0 z-10 flex flex-wrap items-center justify-end gap-3 rounded-2xl border border-white/10 bg-[#0b0e13]/95 px-4 py-3 backdrop-blur-md">
+                        {isBrandDirty && (
+                          <button
+                            type="button"
+                            disabled={isSaving}
+                            onClick={() => {
+                              setDraftBrand(brandConfig);
+                              setDraftTracks(trainingTracks);
+                              setIsBrandDirty(false);
+                            }}
+                            className="cadco-btn-secondary px-4 py-2 text-xs disabled:opacity-50"
+                          >
+                            Descartar cambios
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          disabled={isSaving || videoProgress !== null}
+                          onClick={async () => {
+                            setIsSaving(true);
+                            setSaveError(null);
+                            try {
+                              await saveBrandAndTraining(draftBrand, draftTracks);
+                              setIsBrandDirty(false);
+                              notifySuccess('¡Trabajo Destacado guardado en la base de datos!');
+                            } catch (err) {
+                              notifyError(
+                                err instanceof Error
+                                  ? err.message
+                                  : 'Error al guardar el Trabajo Destacado.'
+                              );
+                            } finally {
+                              setIsSaving(false);
+                            }
+                          }}
+                          className="cadco-btn-primary px-5 py-2.5 text-xs disabled:opacity-50"
+                        >
+                          <Save className="h-4 w-4" />
+                          {isSaving ? 'Guardando...' : 'Guardar Trabajo Destacado'}
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+
                   {/* TAB 3: BRAND & TRAINING */}
                   {activeTab === 'brand' && (
                     <motion.div
@@ -1504,57 +1806,6 @@ export const AdminStudioModal: React.FC = () => {
                             }}
                             className="cadco-input w-full px-3 py-2 text-sm leading-relaxed"
                           />
-                        </div>
-
-                        <div className="rounded-xl border border-[#5bb5b9]/25 bg-[#070a0f] p-4">
-                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                            <div className="min-w-0 space-y-1">
-                              <div className="flex items-center gap-2">
-                                <Box className="h-4 w-4 shrink-0 text-[#5bb5b9]" />
-                                <h5 className="font-display text-xs font-bold uppercase tracking-wider text-white sm:text-sm">
-                                  Modelo 3D Principal del Hero
-                                </h5>
-                              </div>
-                              <p className="text-xs leading-relaxed text-slate-400">
-                                Sube un ensamble o pieza real (.STEP, .STL, .OBJ, .GLB, .IGES) para mostrar tu nivel de diseño directamente en la vitrina principal del catálogo.
-                              </p>
-                              <p className="font-mono-tech text-[11px] text-[#5bb5b9]">
-                                {draftBrand.heroCadFile
-                                  ? `Activo: ${draftBrand.heroCadFile.name}`
-                                  : 'Sin modelo propio · Se usará el archivo 3D del proyecto destacado o el mecanismo base.'}
-                              </p>
-                            </div>
-
-                            <div className="flex shrink-0 flex-wrap items-center gap-2">
-                              <label className="inline-flex min-h-[40px] cursor-pointer items-center gap-1.5 rounded-xl border border-[#5bb5b9]/40 bg-[#5bb5b9]/15 px-3.5 py-2 text-xs font-semibold text-[#5bb5b9] transition hover:bg-[#5bb5b9]/25">
-                                <Upload className="h-3.5 w-3.5" />
-                                {draftBrand.heroCadFile ? 'Cambiar Modelo 3D' : 'Subir Modelo 3D'}
-                                <input
-                                  type="file"
-                                  accept=".stp,.step,.igs,.iges,.stl,.obj,.3ds,.gltf,.glb"
-                                  className="hidden"
-                                  onChange={(e) => {
-                                    void handleHeroCadUpload(e.target.files?.[0]);
-                                    e.target.value = '';
-                                  }}
-                                />
-                              </label>
-                              {draftBrand.heroCadFile && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setDraftBrand({ ...draftBrand, heroCadFile: undefined });
-                                    setIsBrandDirty(true);
-                                    notifySuccess('Modelo 3D principal retirado. Guarda para aplicar.');
-                                  }}
-                                  className="inline-flex min-h-[40px] items-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-300 transition hover:bg-rose-500/20"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                  Quitar
-                                </button>
-                              )}
-                            </div>
-                          </div>
                         </div>
                       </section>
 
