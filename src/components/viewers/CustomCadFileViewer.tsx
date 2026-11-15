@@ -185,12 +185,9 @@ export const CustomCadFileViewer: React.FC<CustomCadFileViewerProps> = ({ cadFil
 
     const handleResize = () => viewer.Resize();
     window.addEventListener('resize', handleResize);
-    const resizeObserver = new ResizeObserver(() => viewer.Resize());
-    resizeObserver.observe(container);
 
     return () => {
       window.removeEventListener('resize', handleResize);
-      resizeObserver.disconnect();
       viewerRef.current = null;
       viewer.Destroy();
     };
@@ -213,7 +210,10 @@ export const CustomCadFileViewer: React.FC<CustomCadFileViewerProps> = ({ cadFil
       {/* Subtle studio floor contact glow */}
       <div className="pointer-events-none absolute inset-x-10 bottom-4 h-10 rounded-full bg-black/45 blur-xl" />
 
-      <div ref={containerRef} className="relative z-10 h-full w-full" />
+      <div
+        ref={containerRef}
+        className="absolute inset-0 z-10 h-full w-full overflow-hidden [&_canvas]:!h-full [&_canvas]:!w-full [&_canvas]:block"
+      />
 
       <div className="pointer-events-none absolute bottom-3 left-3 z-20 rounded-lg border border-white/15 bg-black/75 px-3 py-1 font-mono-tech text-[11px] text-[#5bb5b9] backdrop-blur-sm">
         Archivo 3D: {cadFile.name}

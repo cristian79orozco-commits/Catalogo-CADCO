@@ -361,7 +361,7 @@ export function App() {
                       </div>
 
                       {/* Live 3D Preview Stage */}
-                      <div className="relative h-[280px] border-t border-white/10 bg-[#070a0f] sm:h-[320px] lg:col-span-6 lg:h-auto lg:min-h-[340px] lg:border-t-0 lg:border-l">
+                      <div className="relative h-[280px] overflow-hidden border-t border-white/10 bg-[#070a0f] sm:h-[320px] lg:col-span-6 lg:h-[380px] lg:border-t-0 lg:border-l">
                         {brandConfig.heroCadFile || featuredProject.customCadFile ? (
                           <CustomCadFileViewer
                             cadFile={(brandConfig.heroCadFile ?? featuredProject.customCadFile)!}
