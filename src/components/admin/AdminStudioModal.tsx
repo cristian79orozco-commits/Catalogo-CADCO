@@ -1249,9 +1249,13 @@ export const AdminStudioModal: React.FC = () => {
                             setIsSaving(true);
                             setSaveError(null);
                             try {
-                              const exists = projects.some((p) => p.id === editingProject.id);
-                              if (exists) await updateProject(editingProject);
-                              else await addProject(editingProject);
+                              const projectToSave: CatalogProject = {
+                                ...editingProject,
+                                tags: editingProject.solidworksModules,
+                              };
+                              const exists = projects.some((p) => p.id === projectToSave.id);
+                              if (exists) await updateProject(projectToSave);
+                              else await addProject(projectToSave);
                               setEditingProject(null);
                               notifySuccess('¡Proyecto guardado en la base de datos!');
                             } catch (err) {

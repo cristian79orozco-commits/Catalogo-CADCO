@@ -114,16 +114,18 @@ export const ProjectCard: React.FC<ProjectCardProps> = React.memo(
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-1.5">
-              {project.tags.slice(0, 4).map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded border border-white/10 bg-white/[0.03] px-2 py-0.5 text-[11px] text-slate-400"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
+            {project.solidworksModules.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {project.solidworksModules.slice(0, 4).map((skill) => (
+                  <span
+                    key={skill}
+                    className="rounded border border-white/10 bg-white/[0.03] px-2 py-0.5 text-[11px] text-slate-300"
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </article>

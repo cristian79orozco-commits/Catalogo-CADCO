@@ -87,6 +87,7 @@ export function App() {
         p.title.toLowerCase().includes(q) ||
         p.subtitle.toLowerCase().includes(q) ||
         p.code.toLowerCase().includes(q) ||
+        p.solidworksModules.some((m) => m.toLowerCase().includes(q)) ||
         p.tags.some((t) => t.toLowerCase().includes(q)) ||
         p.specs.software.toLowerCase().includes(q)
       );
