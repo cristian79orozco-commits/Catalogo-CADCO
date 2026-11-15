@@ -7,6 +7,7 @@ interface TechnicalVisualProps {
   projectCode: string;
   className?: string;
   fit?: 'cover' | 'contain';
+  showOverlayBadge?: boolean;
 }
 
 export const TechnicalVisual: React.FC<TechnicalVisualProps> = ({
@@ -15,6 +16,7 @@ export const TechnicalVisual: React.FC<TechnicalVisualProps> = ({
   projectCode,
   className = '',
   fit = 'cover',
+  showOverlayBadge = true,
 }) => {
   const photo: GalleryPhoto = rawPhoto ?? {
     id: `fallback-${projectCode}`,
@@ -39,9 +41,11 @@ export const TechnicalVisual: React.FC<TechnicalVisualProps> = ({
           onContextMenu={(e) => e.preventDefault()}
           className={`h-full w-full ${fit === 'contain' ? 'object-contain' : 'object-cover'}`}
         />
-        <div className="pointer-events-none absolute right-3 bottom-3 rounded-md border border-[#5bb5b9]/40 bg-black/80 px-2.5 py-1 font-mono-tech text-[10px] text-[#5bb5b9] backdrop-blur-sm">
-          {projectCode} · {photo.drawingCode}
-        </div>
+        {showOverlayBadge && (
+          <div className="pointer-events-none absolute right-3 bottom-3 rounded-md border border-[#5bb5b9]/40 bg-black/80 px-2.5 py-1 font-mono-tech text-[10px] text-[#5bb5b9] backdrop-blur-sm">
+            {projectCode} · {photo.drawingCode}
+          </div>
+        )}
       </div>
     );
   }

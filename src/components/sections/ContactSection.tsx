@@ -5,6 +5,7 @@ import { buildGeneralQuoteMessage, buildWhatsAppUrl } from '../../utils/whatsapp
 
 export const ContactSection: React.FC = () => {
   const brandConfig = useCatalogStore((s) => s.brandConfig);
+  const trainingTracks = useCatalogStore((s) => s.trainingTracks);
   const [name, setName] = useState('');
   const [service, setService] = useState('Diseño CAD & Modelado Mecánico');
   const [message, setMessage] = useState('');
@@ -50,18 +51,18 @@ export const ContactSection: React.FC = () => {
           </p>
 
           <div className="mt-6 space-y-3 text-sm text-slate-300">
-            <div className="flex items-center gap-2.5">
-              <Mail className="h-4 w-4 text-[#5bb5b9]" />
-              <span>{brandConfig.contactEmail}</span>
+            <div className="flex min-w-0 items-center gap-2.5">
+              <Mail className="h-4 w-4 shrink-0 text-[#5bb5b9]" />
+              <span className="break-all">{brandConfig.contactEmail}</span>
             </div>
             {directWhatsappUrl && (
               <a
                 href={directWhatsappUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/20"
+                className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-xs font-semibold text-emerald-300 whitespace-nowrap transition hover:bg-emerald-500/20"
               >
-                <MessageCircle className="h-4 w-4" />
+                <MessageCircle className="h-4 w-4 shrink-0" />
                 Escribir por WhatsApp Directo
               </a>
             )}
@@ -97,8 +98,14 @@ export const ContactSection: React.FC = () => {
                 <option>Diseño CAD & Modelado Mecánico</option>
                 <option>Planimetría Técnica & GD&T</option>
                 <option>Ensambles SolidWorks & Chapa Metálica</option>
-                <option>Capacitación Certificación CSWA</option>
-                <option>Capacitación Certificación CSWP</option>
+                {trainingTracks.map((track) => (
+                  <option
+                    key={track.code}
+                    value={`Capacitación ${track.code} — ${track.title}`}
+                  >
+                    Capacitación {track.code} — {track.title}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -116,15 +123,15 @@ export const ContactSection: React.FC = () => {
             />
           </div>
 
-          <div className="mt-5 flex flex-wrap items-center gap-3">
+          <div className="mt-5 grid grid-cols-1 gap-3 sm:flex sm:flex-wrap sm:items-center">
             {whatsappUrl && (
               <a
                 href={whatsappUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="cadco-btn-primary px-5 py-2.5 text-sm"
+                className="cadco-btn-primary min-h-[44px] px-4 py-2.5 text-sm whitespace-nowrap"
               >
-                <MessageCircle className="h-4 w-4" />
+                <MessageCircle className="h-4 w-4 shrink-0" />
                 Enviar Cotización por WhatsApp
               </a>
             )}
@@ -132,19 +139,19 @@ export const ContactSection: React.FC = () => {
               type="submit"
               className={
                 whatsappUrl
-                  ? 'inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-medium text-white transition hover:border-[#5bb5b9]/60'
-                  : 'cadco-btn-primary px-5 py-2.5 text-sm'
+                  ? 'cadco-btn-secondary min-h-[44px] px-4 py-2.5 text-sm whitespace-nowrap'
+                  : 'cadco-btn-primary min-h-[44px] px-4 py-2.5 text-sm whitespace-nowrap'
               }
             >
               {copiedBrief ? (
                 <>
-                  <Check className="h-4 w-4" />
-                  Resumen Copiado al Portapapeles
+                  <Check className="h-4 w-4 shrink-0" />
+                  Resumen Copiado
                 </>
               ) : (
                 <>
-                  <Copy className="h-4 w-4" />
-                  Copiar Resumen para Enviar
+                  <Copy className="h-4 w-4 shrink-0" />
+                  Copiar Resumen
                 </>
               )}
             </button>
@@ -154,9 +161,9 @@ export const ContactSection: React.FC = () => {
               )}&body=${encodeURIComponent(
                 `Hola ${brandConfig.brandName},\n\nSoy ${name || 'un interesado'}.\nServicio: ${service}\n\nDetalle:\n${message}`
               )}`}
-              className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-5 py-2.5 text-sm font-medium text-white transition hover:border-[#5bb5b9]/60"
+              className="cadco-btn-secondary min-h-[44px] px-4 py-2.5 text-sm whitespace-nowrap"
             >
-              <Send className="h-4 w-4 text-[#5bb5b9]" />
+              <Send className="h-4 w-4 shrink-0 text-[#5bb5b9]" />
               Enviar por Correo
             </a>
           </div>

@@ -164,7 +164,7 @@ export function App() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#050608] text-slate-100 lg:flex">
+    <div className="min-h-screen overflow-x-hidden bg-[#050608] text-slate-100 lg:flex">
       {/* Desktop Left Architectural Sidebar Rail */}
       <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:w-[290px] lg:flex-col lg:justify-between lg:border-r lg:border-white/10 lg:bg-[#080b10]">
         <div className="p-6">
@@ -315,7 +315,7 @@ export function App() {
       </header>
 
       {/* Main Catalog Workspace */}
-      <main className="flex-1 bg-cad-grid lg:pl-[290px]">
+      <main className="min-w-0 flex-1 bg-cad-grid lg:pl-[290px]">
         <div className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-10">
           <AnimatePresence mode="wait">
             {activeView === 'portfolio' && (
@@ -348,21 +348,21 @@ export function App() {
                           </p>
                         </div>
 
-                        <div className="mt-6 flex flex-wrap items-center gap-3 border-t border-white/10 pt-5">
+                        <div className="mt-6 grid grid-cols-1 gap-3 border-t border-white/10 pt-5 sm:flex sm:flex-wrap sm:items-center">
                           <button
                             type="button"
                             onClick={() => handleOpen3D(featuredProject.id)}
-                            className="cadco-btn-primary px-5 py-2.5 text-xs sm:text-sm"
+                            className="cadco-btn-primary min-h-[44px] px-5 py-2.5 text-sm whitespace-nowrap"
                           >
-                            <Box className="h-4 w-4" />
+                            <Box className="h-4 w-4 shrink-0" />
                             {sectionCopy.heroPrimaryCta}
                           </button>
                           <button
                             type="button"
                             onClick={() => setActiveView('certificates')}
-                            className="cadco-btn-secondary px-4 py-2.5 text-xs sm:text-sm"
+                            className="cadco-btn-secondary min-h-[44px] px-5 py-2.5 text-sm whitespace-nowrap"
                           >
-                            <ShieldCheck className="h-4 w-4 text-[#5bb5b9]" />
+                            <ShieldCheck className="h-4 w-4 shrink-0 text-[#5bb5b9]" />
                             {sectionCopy.heroSecondaryCta}
                           </button>
                         </div>
@@ -411,7 +411,7 @@ export function App() {
                         key={cat}
                         type="button"
                         onClick={() => setSelectedCategory(cat)}
-                        className={`rounded-xl px-3.5 py-2 text-xs font-semibold transition ${
+                        className={`min-h-[38px] rounded-xl px-3.5 py-2 text-xs font-semibold whitespace-nowrap transition ${
                           selectedCategory === cat
                             ? 'bg-[#5bb5b9] text-slate-950'
                             : 'border border-white/10 bg-[#0b0e13] text-slate-300 hover:border-[#5bb5b9]/40 hover:text-white'

@@ -112,31 +112,25 @@ export const TrainingSection: React.FC = () => {
                 )}
               </div>
 
-              <div className="mt-7 flex flex-col gap-2.5 sm:flex-row">
-                {(() => {
-                  const trackWhatsappUrl = buildWhatsAppUrl(
-                    whatsappNumber,
-                    buildTrainingQuoteMessage(brandName, track)
-                  );
-                  return trackWhatsappUrl ? (
+              {(() => {
+                const trackWhatsappUrl = buildWhatsAppUrl(
+                  whatsappNumber,
+                  buildTrainingQuoteMessage(brandName, track)
+                );
+                return trackWhatsappUrl ? (
+                  <div className="mt-7">
                     <a
                       href={trackWhatsappUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#5bb5b9] px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#4ea5a9]"
+                      className="cadco-btn-primary min-h-[44px] w-full px-5 py-2.5 text-sm whitespace-nowrap"
                     >
-                      <MessageCircle className="h-4 w-4" />
-                      Consultar Cupo por WhatsApp
+                      <MessageCircle className="h-4 w-4 shrink-0" />
+                      <span>Consultar Cupo por WhatsApp</span>
                     </a>
-                  ) : null;
-                })()}
-                <a
-                  href="#contacto"
-                  className="inline-flex flex-1 items-center justify-center rounded-xl border border-[#5bb5b9]/50 bg-[#5bb5b9]/10 px-4 py-3 text-sm font-semibold text-[#5bb5b9] transition hover:bg-[#5bb5b9] hover:text-slate-950"
-                >
-                  Solicitar Temario {track.code}
-                </a>
-              </div>
+                  </div>
+                ) : null;
+              })()}
             </div>
           ))}
         </div>

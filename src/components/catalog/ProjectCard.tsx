@@ -15,14 +15,33 @@ export const ProjectCard: React.FC<ProjectCardProps> = React.memo(
   ({ project, isCopied, onOpen3D, onOpenPhoto, onCopyLink }) => {
     const coverPhoto = project.photos[0];
 
+    const handleOpenFullProject = () => {
+      onOpen3D(project.id);
+    };
+
+    const handleCardKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleOpenFullProject();
+      }
+    };
+
     return (
-      <article className="cadco-card group flex flex-col overflow-hidden hover:-translate-y-1">
+      <article
+        role="button"
+        tabIndex={0}
+        onClick={handleOpenFullProject}
+        onKeyDown={handleCardKeyDown}
+        aria-label={`Abrir visualización completa de ${project.title}`}
+        className="cadco-card group flex cursor-pointer flex-col overflow-hidden text-left hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5bb5b9]"
+      >
         {/* Visual Preview Area */}
         <div className="relative aspect-[16/10] w-full overflow-hidden border-b border-white/10 bg-[#070a0f]">
           <TechnicalVisual
             modelType={project.modelType}
             photo={coverPhoto}
             projectCode={project.code}
+            showOverlayBadge={false}
             className="transition duration-500 group-hover:scale-[1.03]"
           />
 
@@ -65,19 +84,25 @@ export const ProjectCard: React.FC<ProjectCardProps> = React.memo(
           <div className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-2">
             <button
               type="button"
-              onClick={() => onOpen3D(project.id)}
-              className="cadco-btn-primary rounded-lg px-3 py-1.5 text-xs"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpen3D(project.id);
+              }}
+              className="cadco-btn-primary h-9 min-w-0 flex-1 rounded-lg px-3 text-xs whitespace-nowrap sm:flex-initial"
             >
-              <Box className="h-3.5 w-3.5" />
-              Inspeccionar 3D
+              <Box className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">Inspeccionar 3D</span>
             </button>
             <button
               type="button"
-              onClick={() => onOpenPhoto(project.id, 1)}
-              className="cadco-btn-secondary rounded-lg px-3 py-1.5 text-xs"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenPhoto(project.id, 1);
+              }}
+              className="cadco-btn-secondary h-9 min-w-0 flex-1 rounded-lg px-3 text-xs whitespace-nowrap sm:flex-initial"
             >
-              <ImageIcon className="h-3.5 w-3.5" />
-              Planimetría ({project.photos.length})
+              <ImageIcon className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">Planimetría ({project.photos.length})</span>
             </button>
           </div>
         </div>

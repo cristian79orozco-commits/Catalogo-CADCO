@@ -52,9 +52,9 @@ export const CertificatesSection: React.FC = () => {
                       type="button"
                       onClick={() => setActiveCert(cert)}
                       aria-label={`Ampliar certificado ${cert.code}`}
-                      className="absolute right-3 bottom-3 inline-flex items-center gap-1.5 rounded-lg border border-white/20 bg-black/80 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-md transition hover:border-[#5bb5b9] hover:text-[#5bb5b9]"
+                      className="cadco-btn-secondary absolute right-3 bottom-3 h-9 rounded-lg px-3 text-xs whitespace-nowrap"
                     >
-                      <Expand className="h-3.5 w-3.5" />
+                      <Expand className="h-3.5 w-3.5 shrink-0" />
                       Ver Certificado
                     </button>
                   </>
@@ -114,14 +114,14 @@ export const CertificatesSection: React.FC = () => {
           onClick={() => setActiveCert(null)}
         >
           <div
-            className="relative max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-2xl border border-[#5bb5b9]/40 bg-[#0b0e13] p-4"
+            className="relative max-h-[90dvh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-[#5bb5b9]/40 bg-[#0b0e13] p-4"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               type="button"
               onClick={() => setActiveCert(null)}
               aria-label="Cerrar certificado"
-              className="absolute right-4 top-4 rounded-lg border border-white/15 bg-black/80 p-2 text-white hover:border-[#5bb5b9]"
+              className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/15 bg-black/80 text-white transition hover:border-[#5bb5b9]"
             >
               <X className="h-5 w-5" />
             </button>
