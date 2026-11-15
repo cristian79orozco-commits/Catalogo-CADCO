@@ -272,3 +272,37 @@ BEGIN
     ALTER PUBLICATION supabase_realtime ADD TABLE public.brand_config;
   END IF;
 END $$;
+
+-- 8. Bucket de Supabase Storage para modelos 3D (.GLB/.STEP/.STL) y videos optimizados del Hero
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('cadco-media', 'cadco-media', true)
+ON CONFLICT (id) DO NOTHING;
+
+DROP POLICY IF EXISTS "Public read cadco-media" ON storage.objects;
+CREATE POLICY "Public read cadco-media"
+  ON storage.objects
+  FOR SELECT
+  TO anon, authenticated
+  USING (bucket_id = 'cadco-media');
+
+DROP POLICY IF EXISTS "Admin upload cadco-media" ON storage.objects;
+CREATE POLICY "Admin upload cadco-media"
+  ON storage.objects
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (bucket_id = 'cadco-media' AND public.is_cadco_admin());
+
+DROP POLICY IF EXISTS "Admin update cadco-media" ON storage.objects;
+CREATE POLICY "Admin update cadco-media"
+  ON storage.objects
+  FOR UPDATE
+  TO authenticated
+  USING (bucket_id = 'cadco-media' AND public.is_cadco_admin())
+  WITH CHECK (bucket_id = 'cadco-media' AND public.is_cadco_admin());
+
+DROP POLICY IF EXISTS "Admin delete cadco-media" ON storage.objects;
+CREATE POLICY "Admin delete cadco-media"
+  ON storage.objects
+  FOR DELETE
+  TO authenticated
+  USING (bucket_id = 'cadco-media' AND public.is_cadco_admin());

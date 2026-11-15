@@ -177,8 +177,12 @@ export const CustomCadFileViewer: React.FC<CustomCadFileViewerProps> = ({ cadFil
     viewerRef.current = viewer;
 
     try {
-      const file = dataUrlToFile(cadFile.dataUrl, cadFile.name);
-      viewer.LoadModelFromFileList([file]);
+      if (cadFile.dataUrl.startsWith('data:')) {
+        const file = dataUrlToFile(cadFile.dataUrl, cadFile.name);
+        viewer.LoadModelFromFileList([file]);
+      } else {
+        viewer.LoadModelFromUrlList([cadFile.dataUrl]);
+      }
     } catch {
       // Handled gracefully
     }

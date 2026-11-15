@@ -19,7 +19,7 @@ import type { CatalogProject } from '../../types';
 import { useCatalogStore } from '../../store/useCatalogStore';
 import { R3FCadViewer } from '../viewers/R3FCadViewer';
 import { CustomCadFileViewer } from '../viewers/CustomCadFileViewer';
-import { TechnicalVisual } from '../gallery/TechnicalVisual';
+import { ZoomableTechnicalStage } from '../gallery/ZoomableTechnicalStage';
 
 interface ProjectInspectorModalProps {
   project: CatalogProject;
@@ -225,7 +225,8 @@ export const ProjectInspectorModal: React.FC<ProjectInspectorModalProps> = ({ pr
               ) : currentPhoto ? (
                 <div className="relative flex h-full w-full flex-col">
                   <div className="relative flex-1 overflow-hidden p-3">
-                    <TechnicalVisual
+                    <ZoomableTechnicalStage
+                      key={currentPhoto.id}
                       modelType={project.modelType}
                       photo={currentPhoto}
                       projectCode={project.code}
@@ -235,7 +236,7 @@ export const ProjectInspectorModal: React.FC<ProjectInspectorModalProps> = ({ pr
                       type="button"
                       onClick={() => setIsFullscreenPhoto(true)}
                       aria-label="Ampliar imagen"
-                      className="absolute right-6 top-6 rounded-lg border border-white/15 bg-black/75 p-2 text-slate-200 backdrop-blur-md transition hover:border-[#5bb5b9] hover:text-[#5bb5b9]"
+                      className="absolute right-6 top-6 z-20 rounded-lg border border-white/15 bg-black/75 p-2 text-slate-200 backdrop-blur-md transition hover:border-[#5bb5b9] hover:text-[#5bb5b9]"
                     >
                       <Expand className="h-4 w-4" />
                     </button>
@@ -390,7 +391,8 @@ export const ProjectInspectorModal: React.FC<ProjectInspectorModalProps> = ({ pr
             className="relative h-[85vh] w-full max-w-5xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <TechnicalVisual
+            <ZoomableTechnicalStage
+              key={`fs-${currentPhoto.id}`}
               modelType={project.modelType}
               photo={currentPhoto}
               projectCode={project.code}
@@ -399,7 +401,7 @@ export const ProjectInspectorModal: React.FC<ProjectInspectorModalProps> = ({ pr
             <button
               type="button"
               onClick={() => setIsFullscreenPhoto(false)}
-              className="absolute right-4 top-4 rounded-xl border border-white/20 bg-black/80 p-2 text-white hover:border-[#5bb5b9]"
+              className="absolute right-4 top-4 z-20 rounded-xl border border-white/20 bg-black/80 p-2 text-white hover:border-[#5bb5b9]"
             >
               <X className="h-5 w-5" />
             </button>

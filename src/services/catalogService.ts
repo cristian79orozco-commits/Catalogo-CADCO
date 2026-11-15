@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { DEFAULT_BRAND_CONFIG } from '../data/catalogData';
+import { uploadMediaToSupabaseStorage } from './storageService';
 import type {
   BrandConfig,
   CatalogProject,
@@ -252,11 +253,62 @@ export async function fetchCatalogFromSupabase(): Promise<RemoteCatalogSnapshot 
   };
 }
 
+async function resolveProjectStorageMedia(project: CatalogProject): Promise<CatalogProject> {
+  if (!project.customCadFile?.dataUrl.startsWith('data:')) {
+    return project;
+  }
+  const publicUrl = await uploadMediaToSupabaseStorage(
+    project.customCadFile.dataUrl,
+    'models',
+    project.customCadFile.name
+  );
+  if (!publicUrl) return project;
+  return {
+    ...project,
+    customCadFile: { ...project.customCadFile, dataUrl: publicUrl },
+  };
+}
+
+async function resolveBrandStorageMedia(config: BrandConfig): Promise<BrandConfig> {
+  let nextConfig = config;
+
+  if (config.heroCadFile?.dataUrl.startsWith('data:')) {
+    const url = await uploadMediaToSupabaseStorage(
+      config.heroCadFile.dataUrl,
+      'hero-models',
+      config.heroCadFile.name
+    );
+    if (url) {
+      nextConfig = {
+        ...nextConfig,
+        heroCadFile: { ...config.heroCadFile, dataUrl: url },
+      };
+    }
+  }
+
+  if (config.heroVideoFile?.dataUrl.startsWith('data:')) {
+    const url = await uploadMediaToSupabaseStorage(
+      config.heroVideoFile.dataUrl,
+      'hero-videos',
+      config.heroVideoFile.name
+    );
+    if (url) {
+      nextConfig = {
+        ...nextConfig,
+        heroVideoFile: { ...config.heroVideoFile, dataUrl: url },
+      };
+    }
+  }
+
+  return nextConfig;
+}
+
 export async function upsertProjectInSupabase(project: CatalogProject, sortOrder = 0) {
   if (!supabase) return;
+  const normalized = await resolveProjectStorageMedia(project);
   const { error } = await supabase
     .from('catalog_projects')
-    .upsert({ ...mapProjectToRow(project, sortOrder), updated_at: new Date().toISOString() });
+    .upsert({ ...mapProjectToRow(normalized, sortOrder), updated_at: new Date().toISOString() });
   if (error) throw error;
 }
 
@@ -301,9 +353,10 @@ export async function upsertTrainingTrackInSupabase(track: CertificationTrack) {
 
 export async function upsertBrandConfigInSupabase(config: BrandConfig) {
   if (!supabase) return;
+  const normalized = await resolveBrandStorageMedia(config);
   const { error } = await supabase
     .from('brand_config')
-    .upsert({ ...mapBrandToRow(config), updated_at: new Date().toISOString() });
+    .upsert({ ...mapBrandToRow(normalized), updated_at: new Date().toISOString() });
   if (error) throw error;
 }
 
@@ -318,7 +371,10 @@ export async function seedSnapshotToSupabase(snapshot: {
   const now = new Date().toISOString();
 
   if (snapshot.projects.length > 0) {
-    const projectRows = snapshot.projects.map((p, idx) => ({
+    const resolvedProjects = await Promise.all(
+      snapshot.projects.map((p) => resolveProjectStorageMedia(p))
+    );
+    const projectRows = resolvedProjects.map((p, idx) => ({
       ...mapProjectToRow(p, idx),
       updated_at: now,
     }));
@@ -345,9 +401,10 @@ export async function seedSnapshotToSupabase(snapshot: {
     if (error) throw error;
   }
 
+  const resolvedBrand = await resolveBrandStorageMedia(snapshot.brandConfig);
   const { error: brandError } = await supabase
     .from('brand_config')
-    .upsert({ ...mapBrandToRow(snapshot.brandConfig), updated_at: now });
+    .upsert({ ...mapBrandToRow(resolvedBrand), updated_at: now });
   if (brandError) throw brandError;
 }
 

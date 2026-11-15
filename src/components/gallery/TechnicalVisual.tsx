@@ -6,6 +6,7 @@ interface TechnicalVisualProps {
   photo?: GalleryPhoto;
   projectCode: string;
   className?: string;
+  fit?: 'cover' | 'contain';
 }
 
 export const TechnicalVisual: React.FC<TechnicalVisualProps> = ({
@@ -13,6 +14,7 @@ export const TechnicalVisual: React.FC<TechnicalVisualProps> = ({
   photo: rawPhoto,
   projectCode,
   className = '',
+  fit = 'cover',
 }) => {
   const photo: GalleryPhoto = rawPhoto ?? {
     id: `fallback-${projectCode}`,
@@ -25,12 +27,17 @@ export const TechnicalVisual: React.FC<TechnicalVisualProps> = ({
 
   if (photo.imageDataUrl) {
     return (
-      <div className={`relative h-full w-full overflow-hidden bg-[#070a0f] select-none ${className}`}>
+      <div
+        onContextMenu={(e) => e.preventDefault()}
+        className={`relative h-full w-full overflow-hidden bg-[#070a0f] select-none ${className}`}
+      >
         <img
           src={photo.imageDataUrl}
           alt={photo.title}
           loading="lazy"
-          className="h-full w-full object-cover"
+          draggable={false}
+          onContextMenu={(e) => e.preventDefault()}
+          className={`h-full w-full ${fit === 'contain' ? 'object-contain' : 'object-cover'}`}
         />
         <div className="pointer-events-none absolute right-3 bottom-3 rounded-md border border-[#5bb5b9]/40 bg-black/80 px-2.5 py-1 font-mono-tech text-[10px] text-[#5bb5b9] backdrop-blur-sm">
           {projectCode} · {photo.drawingCode}
