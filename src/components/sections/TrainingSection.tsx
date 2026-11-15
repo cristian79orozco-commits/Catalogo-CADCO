@@ -36,55 +36,80 @@ export const TrainingSection: React.FC = () => {
             >
               <div>
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <span className="inline-flex items-center gap-2 rounded-lg bg-[#5bb5b9] px-3 py-1 font-mono-tech text-sm font-bold text-slate-950">
-                    <Award className="h-4 w-4" />
-                    {track.code}
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 font-mono-tech text-xs text-slate-400">
-                    <Clock className="h-3.5 w-3.5 text-[#5bb5b9]" />
-                    {track.duration}
-                  </span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center gap-2 rounded-lg bg-[#5bb5b9] px-3 py-1 font-mono-tech text-sm font-bold text-slate-950">
+                      <Award className="h-4 w-4" />
+                      {track.code}
+                    </span>
+                    {track.level && (
+                      <span className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1 font-mono-tech text-[11px] text-slate-300">
+                        {track.level}
+                      </span>
+                    )}
+                  </div>
+                  {track.duration && (
+                    <span className="inline-flex items-center gap-1.5 font-mono-tech text-xs text-slate-400">
+                      <Clock className="h-3.5 w-3.5 text-[#5bb5b9]" />
+                      {track.duration}
+                    </span>
+                  )}
                 </div>
 
                 <h3 className="mt-4 font-display text-2xl font-bold text-white">
                   {track.title}
                 </h3>
-                <p className="mt-1 text-sm font-medium text-[#5bb5b9]">{track.subtitle}</p>
-                <p className="mt-3 text-sm leading-relaxed text-slate-300">
-                  {track.description}
-                </p>
+                {track.subtitle && (
+                  <p className="mt-1 text-sm font-medium text-[#5bb5b9]">{track.subtitle}</p>
+                )}
+                {track.description && (
+                  <p className="mt-3 text-sm leading-relaxed text-slate-300">
+                    {track.description}
+                  </p>
+                )}
 
-                <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-2.5 font-mono-tech text-xs text-slate-300">
-                  {track.examFormat}
-                </div>
+                {track.examFormat && (
+                  <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-2.5 font-mono-tech text-xs text-slate-300">
+                    {track.examFormat}
+                  </div>
+                )}
 
-                <div className="mt-6">
-                  <h4 className="text-xs font-semibold tracking-wider text-slate-400 uppercase">
-                    Temario Clave
-                  </h4>
-                  <ul className="mt-3 space-y-2">
-                    {track.topics.map((topic) => (
-                      <li key={topic} className="flex items-start gap-2.5 text-sm text-slate-300">
-                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5bb5b9]" />
-                        <span>{topic}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                {track.topics.length > 0 && (
+                  <div className="mt-6">
+                    <h4 className="text-xs font-semibold tracking-wider text-slate-400 uppercase">
+                      Temario Clave
+                    </h4>
+                    <ul className="mt-3 space-y-2">
+                      {track.topics.map((topic, tIdx) => (
+                        <li
+                          key={`${track.code}-topic-${tIdx}`}
+                          className="flex items-start gap-2.5 text-sm text-slate-300"
+                        >
+                          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5bb5b9]" />
+                          <span>{topic}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
-                <div className="mt-6 border-t border-white/10 pt-5">
-                  <h4 className="text-xs font-semibold tracking-wider text-slate-400 uppercase">
-                    Incluye
-                  </h4>
-                  <ul className="mt-2.5 space-y-1.5">
-                    {track.deliverables.map((item) => (
-                      <li key={item} className="flex items-center gap-2 text-xs text-slate-200">
-                        <FileCheck2 className="h-3.5 w-3.5 shrink-0 text-[#5bb5b9]" />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                {track.deliverables.length > 0 && (
+                  <div className="mt-6 border-t border-white/10 pt-5">
+                    <h4 className="text-xs font-semibold tracking-wider text-slate-400 uppercase">
+                      Incluye
+                    </h4>
+                    <ul className="mt-2.5 space-y-1.5">
+                      {track.deliverables.map((item, dIdx) => (
+                        <li
+                          key={`${track.code}-deliv-${dIdx}`}
+                          className="flex items-center gap-2 text-xs text-slate-200"
+                        >
+                          <FileCheck2 className="h-3.5 w-3.5 shrink-0 text-[#5bb5b9]" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
 
               <div className="mt-7 flex flex-col gap-2.5 sm:flex-row">

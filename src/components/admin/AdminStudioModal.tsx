@@ -50,6 +50,7 @@ import {
 } from '../../utils/whatsapp';
 import { DEFAULT_SECTION_COPY } from '../../data/catalogData';
 import { HeroVideoShowcase } from '../viewers/HeroVideoShowcase';
+import { TrainingTracksEditor } from './TrainingTracksEditor';
 import type {
   BrandConfig,
   CadModelType,
@@ -2315,54 +2316,13 @@ export const AdminStudioModal: React.FC = () => {
                         })()}
                       </section>
 
-                      <section className="space-y-4 rounded-2xl border border-white/10 bg-[#0b0e13]/95 p-4 sm:p-5">
-                        <h4 className="font-display text-sm font-bold text-white">
-                          Programas de Capacitación (CSWA / CSWP)
-                        </h4>
-                        <div className="grid gap-4 lg:grid-cols-2">
-                          {draftTracks.map((track: CertificationTrack, idx: number) => (
-                            <div
-                              key={track.code}
-                              className="space-y-3 rounded-xl border border-white/10 bg-[#070a0f] p-4"
-                            >
-                              <span className="inline-block rounded bg-[#5bb5b9]/15 px-2 py-0.5 font-mono-tech text-xs font-bold text-[#5bb5b9]">
-                                {track.code}
-                              </span>
-                              <input
-                                value={track.title}
-                                onChange={(e) => {
-                                  const next = [...draftTracks];
-                                  next[idx] = { ...track, title: e.target.value };
-                                  setDraftTracks(next);
-                                  setIsBrandDirty(true);
-                                }}
-                                className="cadco-input w-full px-3 py-2 text-sm"
-                              />
-                              <input
-                                value={track.duration}
-                                onChange={(e) => {
-                                  const next = [...draftTracks];
-                                  next[idx] = { ...track, duration: e.target.value };
-                                  setDraftTracks(next);
-                                  setIsBrandDirty(true);
-                                }}
-                                className="cadco-input w-full px-3 py-2 text-xs"
-                              />
-                              <textarea
-                                rows={2}
-                                value={track.description}
-                                onChange={(e) => {
-                                  const next = [...draftTracks];
-                                  next[idx] = { ...track, description: e.target.value };
-                                  setDraftTracks(next);
-                                  setIsBrandDirty(true);
-                                }}
-                                className="cadco-input w-full px-3 py-2 text-xs leading-relaxed"
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      </section>
+                      <TrainingTracksEditor
+                        tracks={draftTracks}
+                        onChange={(nextTracks) => {
+                          setDraftTracks(nextTracks);
+                          setIsBrandDirty(true);
+                        }}
+                      />
 
                       {saveError && (
                         <p className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2.5 text-xs text-rose-300">
@@ -2390,10 +2350,48 @@ export const AdminStudioModal: React.FC = () => {
                           type="button"
                           disabled={isSaving}
                           onClick={async () => {
+                            const sanitizedTracks: CertificationTrack[] = draftTracks.map(
+                              (track) => ({
+                                code: track.code.trim().toUpperCase(),
+                                title: track.title.trim(),
+                                subtitle: track.subtitle.trim(),
+                                level: track.level.trim(),
+                                duration: track.duration.trim(),
+                                examFormat: track.examFormat.trim(),
+                                description: track.description.trim(),
+                                topics: track.topics.map((t) => t.trim()).filter(Boolean),
+                                deliverables: track.deliverables
+                                  .map((d) => d.trim())
+                                  .filter(Boolean),
+                              })
+                            );
+
+                            const invalidTrack = sanitizedTracks.find(
+                              (t) => !t.code || !t.title
+                            );
+                            if (invalidTrack) {
+                              notifyError(
+                                'Cada programa de capacitación debe tener código y título.'
+                              );
+                              return;
+                            }
+
+                            const seenCodes = new Set<string>();
+                            for (const t of sanitizedTracks) {
+                              if (seenCodes.has(t.code)) {
+                                notifyError(
+                                  `El código de capacitación "${t.code}" está duplicado. Usa un código único para cada programa.`
+                                );
+                                return;
+                              }
+                              seenCodes.add(t.code);
+                            }
+
                             setIsSaving(true);
                             setSaveError(null);
                             try {
-                              await saveBrandAndTraining(draftBrand, draftTracks);
+                              await saveBrandAndTraining(draftBrand, sanitizedTracks);
+                              setDraftTracks(sanitizedTracks);
                               setIsBrandDirty(false);
                               notifySuccess(
                                 '¡Marca y capacitación guardadas en la base de datos!'

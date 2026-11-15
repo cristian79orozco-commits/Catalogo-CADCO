@@ -15,6 +15,7 @@ import {
   signInAdminWithSupabase,
   signOutAdminFromSupabase,
   subscribeToCatalogRealtime,
+  syncTrainingTracksInSupabase,
   upsertBrandConfigInSupabase,
   upsertCertificateInSupabase,
   upsertProjectInSupabase,
@@ -672,7 +673,7 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
       try {
         await Promise.all([
           upsertBrandConfigInSupabase(brandConfig),
-          ...trainingTracks.map((track) => upsertTrainingTrackInSupabase(track)),
+          syncTrainingTracksInSupabase(trainingTracks),
         ]);
       } catch (err) {
         const msg =

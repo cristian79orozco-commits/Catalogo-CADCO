@@ -60,6 +60,7 @@ interface TrainingTrackRow {
   description: string;
   topics: string[];
   deliverables: string[];
+  sort_order?: number;
 }
 
 interface BrandConfigRow {
@@ -146,7 +147,7 @@ function mapRowToCertificate(row: CertificateRow): DigitalCertificate {
   };
 }
 
-function mapTrackToRow(track: CertificationTrack): TrainingTrackRow {
+function mapTrackToRow(track: CertificationTrack, sortOrder = 0): TrainingTrackRow {
   return {
     code: track.code,
     title: track.title,
@@ -157,6 +158,7 @@ function mapTrackToRow(track: CertificationTrack): TrainingTrackRow {
     description: track.description,
     topics: track.topics,
     deliverables: track.deliverables,
+    sort_order: sortOrder,
   };
 }
 
@@ -243,9 +245,12 @@ export async function fetchCatalogFromSupabase(): Promise<RemoteCatalogSnapshot 
   if (tracksRes.error) throw tracksRes.error;
   if (brandRes.error) throw brandRes.error;
 
+  const rawTrackRows = [...((tracksRes.data ?? []) as TrainingTrackRow[])].sort(
+    (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+  );
   const projects = ((projectsRes.data ?? []) as ProjectRow[]).map(mapRowToProject);
   const certificates = ((certsRes.data ?? []) as CertificateRow[]).map(mapRowToCertificate);
-  const trainingTracks = ((tracksRes.data ?? []) as TrainingTrackRow[]).map(mapRowToTrack);
+  const trainingTracks = rawTrackRows.map(mapRowToTrack);
   const brandConfig = brandRes.data ? mapRowToBrand(brandRes.data as BrandConfigRow) : null;
 
   const hasRemoteData =
@@ -342,23 +347,58 @@ export async function deleteCertificateInSupabase(certId: string) {
   if (error) throw error;
 }
 
-export async function upsertTrainingTrackInSupabase(track: CertificationTrack) {
+async function upsertTrackRowsSafe(rows: Array<TrainingTrackRow & { updated_at: string }>) {
+  if (!supabase || rows.length === 0) return;
+  const { error } = await supabase.from('training_tracks').upsert(rows);
+  if (!error) return;
+
+  // Fallback si la columna sort_order aún no existe en la instancia remota de Supabase
+  const msg = String(error.message ?? '').toLowerCase();
+  if (error.code === '42703' || error.code === 'PGRST204' || msg.includes('sort_order')) {
+    const legacyRows = rows.map(({ sort_order: _omit, ...rest }) => rest);
+    const { error: retryError } = await supabase.from('training_tracks').upsert(legacyRows);
+    if (retryError) throw retryError;
+    return;
+  }
+
+  throw error;
+}
+
+export async function upsertTrainingTrackInSupabase(track: CertificationTrack, sortOrder = 0) {
   if (!supabase) return;
-  const row: TrainingTrackRow = {
-    code: track.code,
-    title: track.title,
-    subtitle: track.subtitle,
-    level: track.level,
-    duration: track.duration,
-    exam_format: track.examFormat,
-    description: track.description,
-    topics: track.topics,
-    deliverables: track.deliverables,
-  };
-  const { error } = await supabase
+  await upsertTrackRowsSafe([
+    { ...mapTrackToRow(track, sortOrder), updated_at: new Date().toISOString() },
+  ]);
+}
+
+export async function syncTrainingTracksInSupabase(tracks: CertificationTrack[]) {
+  if (!supabase) return;
+  const { data: existingRows, error: fetchError } = await supabase
     .from('training_tracks')
-    .upsert({ ...row, updated_at: new Date().toISOString() });
-  if (error) throw error;
+    .select('code');
+  if (fetchError) throw fetchError;
+
+  const activeCodes = new Set(tracks.map((t) => t.code));
+  const removedCodes = (existingRows ?? [])
+    .map((r) => String((r as { code: string }).code))
+    .filter((code) => !activeCodes.has(code));
+
+  if (removedCodes.length > 0) {
+    const { error: deleteError } = await supabase
+      .from('training_tracks')
+      .delete()
+      .in('code', removedCodes);
+    if (deleteError) throw deleteError;
+  }
+
+  if (tracks.length > 0) {
+    const now = new Date().toISOString();
+    const rows = tracks.map((track, idx) => ({
+      ...mapTrackToRow(track, idx),
+      updated_at: now,
+    }));
+    await upsertTrackRowsSafe(rows);
+  }
 }
 
 async function upsertBrandRowSafe(row: BrandConfigRow & { updated_at: string }) {
@@ -416,13 +456,11 @@ export async function seedSnapshotToSupabase(snapshot: {
   }
 
   if (snapshot.trainingTracks.length > 0) {
-    const trackRows = snapshot.trainingTracks.map((t) => ({
-      ...mapTrackToRow(t),
-      exam_format: t.examFormat,
+    const trackRows = snapshot.trainingTracks.map((t, idx) => ({
+      ...mapTrackToRow(t, idx),
       updated_at: now,
     }));
-    const { error } = await supabase.from('training_tracks').upsert(trackRows);
-    if (error) throw error;
+    await upsertTrackRowsSafe(trackRows);
   }
 
   const resolvedBrand = await resolveBrandStorageMedia(snapshot.brandConfig);

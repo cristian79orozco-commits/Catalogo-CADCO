@@ -142,9 +142,9 @@ CREATE POLICY "Admin delete digital_certificates"
   TO authenticated
   USING (public.is_cadco_admin());
 
--- 5. Tabla de Rutas de Capacitación (CSWA / CSWP)
+-- 5. Tabla de Rutas de Capacitación (CSWA / CSWP / Personalizadas)
 CREATE TABLE IF NOT EXISTS public.training_tracks (
-  code text PRIMARY KEY CHECK (code IN ('CSWA', 'CSWP')),
+  code text PRIMARY KEY,
   title text NOT NULL,
   subtitle text NOT NULL DEFAULT '',
   level text NOT NULL DEFAULT '',
@@ -153,8 +153,13 @@ CREATE TABLE IF NOT EXISTS public.training_tracks (
   description text NOT NULL DEFAULT '',
   topics jsonb NOT NULL DEFAULT '[]'::jsonb,
   deliverables jsonb NOT NULL DEFAULT '[]'::jsonb,
+  sort_order integer NOT NULL DEFAULT 0,
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+-- Compatibilidad si la tabla ya existía con el CHECK anterior o sin sort_order
+ALTER TABLE public.training_tracks DROP CONSTRAINT IF EXISTS training_tracks_code_check;
+ALTER TABLE public.training_tracks ADD COLUMN IF NOT EXISTS sort_order integer NOT NULL DEFAULT 0;
 
 ALTER TABLE public.training_tracks ENABLE ROW LEVEL SECURITY;
 

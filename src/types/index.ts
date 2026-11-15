@@ -81,7 +81,7 @@ export interface DigitalCertificate {
 }
 
 export interface CertificationTrack {
-  code: 'CSWA' | 'CSWP';
+  code: string;
   title: string;
   subtitle: string;
   level: string;
