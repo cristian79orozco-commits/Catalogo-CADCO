@@ -5,6 +5,7 @@ import type { CustomCadFile } from '../../types';
 
 interface CustomCadFileViewerProps {
   cadFile: CustomCadFile;
+  clean?: boolean;
 }
 
 function dataUrlToFile(dataUrl: string, fileName: string): File {
@@ -138,7 +139,10 @@ function enhancePbrStudioMaterials(scene: ThreeLikeObject | undefined) {
   });
 }
 
-export const CustomCadFileViewer: React.FC<CustomCadFileViewerProps> = ({ cadFile }) => {
+export const CustomCadFileViewer: React.FC<CustomCadFileViewerProps> = ({
+  cadFile,
+  clean = false,
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<OV.EmbeddedViewer | null>(null);
   const [showEdges, setShowEdges] = useState(false);
@@ -219,23 +223,27 @@ export const CustomCadFileViewer: React.FC<CustomCadFileViewerProps> = ({ cadFil
         className="absolute inset-0 z-10 h-full w-full overflow-hidden [&_canvas]:!h-full [&_canvas]:!w-full [&_canvas]:block"
       />
 
-      <div className="pointer-events-none absolute bottom-3 left-3 z-20 rounded-lg border border-white/15 bg-black/75 px-3 py-1 font-mono-tech text-[11px] text-[#5bb5b9] backdrop-blur-sm">
-        Archivo 3D: {cadFile.name}
-      </div>
+      {!clean && (
+        <>
+          <div className="pointer-events-none absolute bottom-3 left-3 z-20 rounded-lg border border-white/15 bg-black/75 px-3 py-1 font-mono-tech text-[11px] text-[#5bb5b9] backdrop-blur-sm">
+            Archivo 3D: {cadFile.name}
+          </div>
 
-      <button
-        type="button"
-        onClick={() => setShowEdges((prev) => !prev)}
-        className={`absolute right-3 bottom-3 z-20 inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-medium backdrop-blur-sm transition ${
-          showEdges
-            ? 'border-[#5bb5b9] bg-[#5bb5b9]/20 text-[#5bb5b9]'
-            : 'border-white/15 bg-black/70 text-slate-200 hover:border-[#5bb5b9]/60 hover:text-white'
-        }`}
-        title="Mostrar u ocultar aristas CAD"
-      >
-        <Layers className="h-3.5 w-3.5" />
-        Aristas
-      </button>
+          <button
+            type="button"
+            onClick={() => setShowEdges((prev) => !prev)}
+            className={`absolute right-3 bottom-3 z-20 inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-medium backdrop-blur-sm transition ${
+              showEdges
+                ? 'border-[#5bb5b9] bg-[#5bb5b9]/20 text-[#5bb5b9]'
+                : 'border-white/15 bg-black/70 text-slate-200 hover:border-[#5bb5b9]/60 hover:text-white'
+            }`}
+            title="Mostrar u ocultar aristas CAD"
+          >
+            <Layers className="h-3.5 w-3.5" />
+            Aristas
+          </button>
+        </>
+      )}
     </div>
   );
 };

@@ -377,11 +377,11 @@ export function App() {
                           (mode === 'cad3d' || mode === 'auto');
 
                         return (
-                          <div className="relative h-[280px] overflow-hidden border-t border-white/10 bg-[#070a0f] sm:h-[320px] lg:col-span-6 lg:h-[380px] lg:border-t-0 lg:border-l">
+                          <div className="relative h-[300px] overflow-hidden border-t border-white/10 bg-[#050608] sm:h-[340px] lg:col-span-6 lg:h-[400px] lg:border-t-0 lg:border-l">
                             {showVideo && brandConfig.heroVideoFile ? (
                               <HeroVideoShowcase video={brandConfig.heroVideoFile} />
                             ) : showCustomCad && cadFile ? (
-                              <CustomCadFileViewer cadFile={cadFile} />
+                              <CustomCadFileViewer cadFile={cadFile} clean={true} />
                             ) : (
                               <R3FCadViewer
                                 modelType={featuredProject.modelType}
@@ -391,15 +391,6 @@ export function App() {
                                 compact={true}
                               />
                             )}
-                            <div className="pointer-events-none absolute top-3 left-3 z-20 rounded-lg border border-white/10 bg-black/75 px-2.5 py-1 font-mono-tech text-[10px] text-[#5bb5b9] backdrop-blur-sm">
-                              {showVideo
-                                ? `VIDEO DESTACADO · ${featuredProject.code}`
-                                : `VISTA 3D INTERACTIVA · ${
-                                    brandConfig.heroCadFile
-                                      ? 'MODELO PRINCIPAL'
-                                      : featuredProject.code
-                                  }`}
-                            </div>
                           </div>
                         );
                       })()}
