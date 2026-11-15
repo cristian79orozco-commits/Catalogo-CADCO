@@ -48,6 +48,7 @@ import {
   formatWhatsAppDisplay,
   normalizeWhatsAppNumber,
 } from '../../utils/whatsapp';
+import { DEFAULT_SECTION_COPY } from '../../data/catalogData';
 import { HeroVideoShowcase } from '../viewers/HeroVideoShowcase';
 import type {
   BrandConfig,
@@ -59,6 +60,7 @@ import type {
   DigitalCertificate,
   GalleryPhoto,
   HeroShowcaseMode,
+  SectionCopyConfig,
 } from '../../types';
 
 type AdminTab = 'projects' | 'featured' | 'certificates' | 'brand' | 'backup';
@@ -1964,6 +1966,353 @@ export const AdminStudioModal: React.FC = () => {
                             className="cadco-input w-full px-3 py-2 text-sm leading-relaxed"
                           />
                         </div>
+
+                        {(() => {
+                          const draftSectionCopy: SectionCopyConfig = {
+                            ...DEFAULT_SECTION_COPY,
+                            ...(draftBrand.sectionCopy ?? {}),
+                          };
+                          const updateSectionCopy = (patch: Partial<SectionCopyConfig>) => {
+                            setDraftBrand({
+                              ...draftBrand,
+                              sectionCopy: {
+                                ...DEFAULT_SECTION_COPY,
+                                ...(draftBrand.sectionCopy ?? {}),
+                                ...patch,
+                              },
+                            });
+                            setIsBrandDirty(true);
+                          };
+
+                          return (
+                            <div className="space-y-5 border-t border-white/10 pt-5">
+                              {/* Título Hero Editable con Vista Previa */}
+                              <div className="space-y-3 rounded-xl border border-[#5bb5b9]/25 bg-[#070a0f] p-4">
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                  <span className="font-mono-tech text-[11px] font-semibold tracking-wider text-[#5bb5b9] uppercase">
+                                    Título Principal de Portada (Hero)
+                                  </span>
+                                  <span className="text-[11px] text-slate-400">
+                                    Vista previa en tiempo real
+                                  </span>
+                                </div>
+                                <div className="rounded-xl border border-white/10 bg-[#0b0e13]/90 p-3.5">
+                                  <p className="font-display text-lg font-bold leading-snug text-white sm:text-xl">
+                                    {draftBrand.heroTitlePrefix}{' '}
+                                    <span className="text-[#5bb5b9]">
+                                      {draftBrand.heroTitleHighlight}
+                                    </span>{' '}
+                                    {draftBrand.heroTitleSuffix}
+                                  </p>
+                                </div>
+                                <div className="grid gap-3 sm:grid-cols-3">
+                                  <div>
+                                    <label className="mb-1 block text-xs text-slate-400">
+                                      Prefijo (Blanco)
+                                    </label>
+                                    <input
+                                      value={draftBrand.heroTitlePrefix}
+                                      onChange={(e) => {
+                                        setDraftBrand({
+                                          ...draftBrand,
+                                          heroTitlePrefix: e.target.value,
+                                        });
+                                        setIsBrandDirty(true);
+                                      }}
+                                      className="cadco-input w-full px-3 py-2 text-sm"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="mb-1 block text-xs text-[#5bb5b9]">
+                                      Destacado (Teal CADCO)
+                                    </label>
+                                    <input
+                                      value={draftBrand.heroTitleHighlight}
+                                      onChange={(e) => {
+                                        setDraftBrand({
+                                          ...draftBrand,
+                                          heroTitleHighlight: e.target.value,
+                                        });
+                                        setIsBrandDirty(true);
+                                      }}
+                                      className="cadco-input w-full px-3 py-2 text-sm"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="mb-1 block text-xs text-slate-400">
+                                      Sufijo (Blanco)
+                                    </label>
+                                    <input
+                                      value={draftBrand.heroTitleSuffix}
+                                      onChange={(e) => {
+                                        setDraftBrand({
+                                          ...draftBrand,
+                                          heroTitleSuffix: e.target.value,
+                                        });
+                                        setIsBrandDirty(true);
+                                      }}
+                                      className="cadco-input w-full px-3 py-2 text-sm"
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="grid gap-3 pt-1 sm:grid-cols-2">
+                                  <div>
+                                    <label className="mb-1 block text-xs text-slate-400">
+                                      Botón Primario de Portada
+                                    </label>
+                                    <input
+                                      value={draftSectionCopy.heroPrimaryCta}
+                                      onChange={(e) =>
+                                        updateSectionCopy({ heroPrimaryCta: e.target.value })
+                                      }
+                                      className="cadco-input w-full px-3 py-2 text-sm"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="mb-1 block text-xs text-slate-400">
+                                      Botón Secundario de Portada
+                                    </label>
+                                    <input
+                                      value={draftSectionCopy.heroSecondaryCta}
+                                      onChange={(e) =>
+                                        updateSectionCopy({ heroSecondaryCta: e.target.value })
+                                      }
+                                      className="cadco-input w-full px-3 py-2 text-sm"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Apartado Certificaciones & Capacitación */}
+                              <div className="grid gap-4 lg:grid-cols-2">
+                                <div className="space-y-3 rounded-xl border border-white/10 bg-[#070a0f] p-4">
+                                  <span className="inline-block font-mono-tech text-[11px] font-semibold tracking-wider text-[#5bb5b9] uppercase">
+                                    Apartado Certificaciones
+                                  </span>
+                                  <div>
+                                    <label className="mb-1 block text-xs text-slate-400">
+                                      Etiqueta Superior (Badge)
+                                    </label>
+                                    <input
+                                      value={draftSectionCopy.certificatesBadge}
+                                      onChange={(e) =>
+                                        updateSectionCopy({ certificatesBadge: e.target.value })
+                                      }
+                                      className="cadco-input w-full px-3 py-2 text-sm"
+                                    />
+                                  </div>
+                                  <div className="grid gap-2.5 sm:grid-cols-2">
+                                    <div>
+                                      <label className="mb-1 block text-xs text-slate-400">
+                                        Título Base
+                                      </label>
+                                      <input
+                                        value={draftSectionCopy.certificatesTitlePrefix}
+                                        onChange={(e) =>
+                                          updateSectionCopy({
+                                            certificatesTitlePrefix: e.target.value,
+                                          })
+                                        }
+                                        className="cadco-input w-full px-3 py-2 text-sm"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="mb-1 block text-xs text-[#5bb5b9]">
+                                        Destacado Teal
+                                      </label>
+                                      <input
+                                        value={draftSectionCopy.certificatesTitleHighlight}
+                                        onChange={(e) =>
+                                          updateSectionCopy({
+                                            certificatesTitleHighlight: e.target.value,
+                                          })
+                                        }
+                                        className="cadco-input w-full px-3 py-2 text-sm"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <label className="mb-1 block text-xs text-slate-400">
+                                      Descripción del Apartado
+                                    </label>
+                                    <textarea
+                                      rows={2}
+                                      value={draftSectionCopy.certificatesSubtitle}
+                                      onChange={(e) =>
+                                        updateSectionCopy({
+                                          certificatesSubtitle: e.target.value,
+                                        })
+                                      }
+                                      className="cadco-input w-full px-3 py-2 text-sm leading-relaxed"
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="space-y-3 rounded-xl border border-white/10 bg-[#070a0f] p-4">
+                                  <span className="inline-block font-mono-tech text-[11px] font-semibold tracking-wider text-[#5bb5b9] uppercase">
+                                    Apartado Capacitación
+                                  </span>
+                                  <div>
+                                    <label className="mb-1 block text-xs text-slate-400">
+                                      Etiqueta Superior (Badge)
+                                    </label>
+                                    <input
+                                      value={draftSectionCopy.trainingBadge}
+                                      onChange={(e) =>
+                                        updateSectionCopy({ trainingBadge: e.target.value })
+                                      }
+                                      className="cadco-input w-full px-3 py-2 text-sm"
+                                    />
+                                  </div>
+                                  <div className="grid gap-2.5 sm:grid-cols-2">
+                                    <div>
+                                      <label className="mb-1 block text-xs text-slate-400">
+                                        Título Base
+                                      </label>
+                                      <input
+                                        value={draftSectionCopy.trainingTitlePrefix}
+                                        onChange={(e) =>
+                                          updateSectionCopy({
+                                            trainingTitlePrefix: e.target.value,
+                                          })
+                                        }
+                                        className="cadco-input w-full px-3 py-2 text-sm"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="mb-1 block text-xs text-[#5bb5b9]">
+                                        Destacado Teal
+                                      </label>
+                                      <input
+                                        value={draftSectionCopy.trainingTitleHighlight}
+                                        onChange={(e) =>
+                                          updateSectionCopy({
+                                            trainingTitleHighlight: e.target.value,
+                                          })
+                                        }
+                                        className="cadco-input w-full px-3 py-2 text-sm"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <label className="mb-1 block text-xs text-slate-400">
+                                      Descripción del Apartado
+                                    </label>
+                                    <textarea
+                                      rows={2}
+                                      value={draftSectionCopy.trainingSubtitle}
+                                      onChange={(e) =>
+                                        updateSectionCopy({ trainingSubtitle: e.target.value })
+                                      }
+                                      className="cadco-input w-full px-3 py-2 text-sm leading-relaxed"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Apartado Contacto & Pestañas de Navegación */}
+                              <div className="grid gap-4 lg:grid-cols-2">
+                                <div className="space-y-3 rounded-xl border border-white/10 bg-[#070a0f] p-4">
+                                  <span className="inline-block font-mono-tech text-[11px] font-semibold tracking-wider text-[#5bb5b9] uppercase">
+                                    Apartado Contacto
+                                  </span>
+                                  <div>
+                                    <label className="mb-1 block text-xs text-slate-400">
+                                      Título de Contacto
+                                    </label>
+                                    <input
+                                      value={draftBrand.contactTitle}
+                                      onChange={(e) => {
+                                        setDraftBrand({
+                                          ...draftBrand,
+                                          contactTitle: e.target.value,
+                                        });
+                                        setIsBrandDirty(true);
+                                      }}
+                                      className="cadco-input w-full px-3 py-2 text-sm"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="mb-1 block text-xs text-slate-400">
+                                      Subtítulo de Contacto
+                                    </label>
+                                    <textarea
+                                      rows={2}
+                                      value={draftBrand.contactSubtitle}
+                                      onChange={(e) => {
+                                        setDraftBrand({
+                                          ...draftBrand,
+                                          contactSubtitle: e.target.value,
+                                        });
+                                        setIsBrandDirty(true);
+                                      }}
+                                      className="cadco-input w-full px-3 py-2 text-sm leading-relaxed"
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="space-y-3 rounded-xl border border-white/10 bg-[#070a0f] p-4">
+                                  <span className="inline-block font-mono-tech text-[11px] font-semibold tracking-wider text-[#5bb5b9] uppercase">
+                                    Menú de Navegación (Cliente)
+                                  </span>
+                                  <div className="grid gap-2.5 sm:grid-cols-2">
+                                    <div>
+                                      <label className="mb-1 block text-xs text-slate-400">
+                                        Pestaña Portafolio
+                                      </label>
+                                      <input
+                                        value={draftSectionCopy.navPortfolioLabel}
+                                        onChange={(e) =>
+                                          updateSectionCopy({ navPortfolioLabel: e.target.value })
+                                        }
+                                        className="cadco-input w-full px-3 py-2 text-sm"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="mb-1 block text-xs text-slate-400">
+                                        Pestaña Certificados
+                                      </label>
+                                      <input
+                                        value={draftSectionCopy.navCertificatesLabel}
+                                        onChange={(e) =>
+                                          updateSectionCopy({
+                                            navCertificatesLabel: e.target.value,
+                                          })
+                                        }
+                                        className="cadco-input w-full px-3 py-2 text-sm"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="mb-1 block text-xs text-slate-400">
+                                        Pestaña Capacitación
+                                      </label>
+                                      <input
+                                        value={draftSectionCopy.navTrainingLabel}
+                                        onChange={(e) =>
+                                          updateSectionCopy({ navTrainingLabel: e.target.value })
+                                        }
+                                        className="cadco-input w-full px-3 py-2 text-sm"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="mb-1 block text-xs text-slate-400">
+                                        Pestaña Contacto
+                                      </label>
+                                      <input
+                                        value={draftSectionCopy.navContactLabel}
+                                        onChange={(e) =>
+                                          updateSectionCopy({ navContactLabel: e.target.value })
+                                        }
+                                        className="cadco-input w-full px-3 py-2 text-sm"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </section>
 
                       <section className="space-y-4 rounded-2xl border border-white/10 bg-[#0b0e13]/95 p-4 sm:p-5">

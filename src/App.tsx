@@ -13,7 +13,7 @@ import {
   Share2,
   ShieldCheck,
 } from 'lucide-react';
-import { CATEGORY_LABELS } from './data/catalogData';
+import { CATEGORY_LABELS, DEFAULT_SECTION_COPY } from './data/catalogData';
 import { useCatalogStore, type CatalogViewTab } from './store/useCatalogStore';
 import type { CatalogCategory } from './types';
 import { ProjectCard } from './components/catalog/ProjectCard';
@@ -141,21 +141,26 @@ export function App() {
     setTimeout(() => setCatalogLinkCopied(false), 2500);
   };
 
+  const sectionCopy = {
+    ...DEFAULT_SECTION_COPY,
+    ...(brandConfig.sectionCopy ?? {}),
+  };
+
   const navItems: Array<{
     id: CatalogViewTab;
     label: string;
     icon: React.FC<{ className?: string }>;
     badge?: number;
   }> = [
-    { id: 'portfolio', label: 'Catálogo de Trabajos', icon: Layers, badge: projects.length },
+    { id: 'portfolio', label: sectionCopy.navPortfolioLabel, icon: Layers, badge: projects.length },
     {
       id: 'certificates',
-      label: 'Certificados Oficiales',
+      label: sectionCopy.navCertificatesLabel,
       icon: ShieldCheck,
       badge: certificates.length,
     },
-    { id: 'training', label: 'Capacitación CSWA / CSWP', icon: GraduationCap },
-    { id: 'contact', label: 'Contacto Directo', icon: Mail },
+    { id: 'training', label: sectionCopy.navTrainingLabel, icon: GraduationCap },
+    { id: 'contact', label: sectionCopy.navContactLabel, icon: Mail },
   ];
 
   return (
@@ -350,7 +355,7 @@ export function App() {
                             className="cadco-btn-primary px-5 py-2.5 text-xs sm:text-sm"
                           >
                             <Box className="h-4 w-4" />
-                            Inspeccionar Trabajo Destacado
+                            {sectionCopy.heroPrimaryCta}
                           </button>
                           <button
                             type="button"
@@ -358,7 +363,7 @@ export function App() {
                             className="cadco-btn-secondary px-4 py-2.5 text-xs sm:text-sm"
                           >
                             <ShieldCheck className="h-4 w-4 text-[#5bb5b9]" />
-                            Ver Certificados
+                            {sectionCopy.heroSecondaryCta}
                           </button>
                         </div>
                       </div>

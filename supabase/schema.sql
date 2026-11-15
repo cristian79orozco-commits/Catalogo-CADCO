@@ -203,12 +203,14 @@ CREATE TABLE IF NOT EXISTS public.brand_config (
   hero_cad_file jsonb,
   hero_video_file jsonb,
   hero_showcase_mode text NOT NULL DEFAULT 'auto',
+  section_copy jsonb,
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
 ALTER TABLE public.brand_config ADD COLUMN IF NOT EXISTS hero_cad_file jsonb;
 ALTER TABLE public.brand_config ADD COLUMN IF NOT EXISTS hero_video_file jsonb;
 ALTER TABLE public.brand_config ADD COLUMN IF NOT EXISTS hero_showcase_mode text NOT NULL DEFAULT 'auto';
+ALTER TABLE public.brand_config ADD COLUMN IF NOT EXISTS section_copy jsonb;
 
 ALTER TABLE public.brand_config ENABLE ROW LEVEL SECURITY;
 

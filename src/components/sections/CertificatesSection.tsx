@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Award, CheckCircle2, Expand, ShieldCheck, X } from 'lucide-react';
+import { DEFAULT_SECTION_COPY } from '../../data/catalogData';
 import { useCatalogStore } from '../../store/useCatalogStore';
 import type { DigitalCertificate } from '../../types';
 
 export const CertificatesSection: React.FC = () => {
   const certificates = useCatalogStore((s) => s.certificates);
+  const rawSectionCopy = useCatalogStore((s) => s.brandConfig.sectionCopy);
+  const sectionCopy = { ...DEFAULT_SECTION_COPY, ...(rawSectionCopy ?? {}) };
   const [activeCert, setActiveCert] = useState<DigitalCertificate | null>(null);
 
   return (
@@ -14,14 +17,14 @@ export const CertificatesSection: React.FC = () => {
         <div className="max-w-2xl">
           <div className="cadco-badge px-3.5 py-1 text-xs font-medium">
             <ShieldCheck className="h-3.5 w-3.5" />
-            <span>Respaldo Profesional Verificado</span>
+            <span>{sectionCopy.certificatesBadge}</span>
           </div>
           <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            Certificaciones Oficiales{' '}
-            <span className="text-[#5bb5b9]">SolidWorks</span>
+            {sectionCopy.certificatesTitlePrefix}{' '}
+            <span className="text-[#5bb5b9]">{sectionCopy.certificatesTitleHighlight}</span>
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-slate-300 sm:text-base">
-            Credenciales oficiales otorgadas por Dassault Systèmes que avalan la precisión técnica, dominio del modelado paramétrico y capacidad de formación profesional.
+            {sectionCopy.certificatesSubtitle}
           </p>
         </div>
 

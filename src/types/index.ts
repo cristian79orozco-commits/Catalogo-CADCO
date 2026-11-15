@@ -92,6 +92,23 @@ export interface CertificationTrack {
   deliverables: string[];
 }
 
+export interface SectionCopyConfig {
+  navPortfolioLabel: string;
+  navCertificatesLabel: string;
+  navTrainingLabel: string;
+  navContactLabel: string;
+  heroPrimaryCta: string;
+  heroSecondaryCta: string;
+  certificatesBadge: string;
+  certificatesTitlePrefix: string;
+  certificatesTitleHighlight: string;
+  certificatesSubtitle: string;
+  trainingBadge: string;
+  trainingTitlePrefix: string;
+  trainingTitleHighlight: string;
+  trainingSubtitle: string;
+}
+
 export interface BrandConfig {
   brandName: string;
   heroBadge: string;
@@ -107,4 +124,5 @@ export interface BrandConfig {
   heroCadFile?: CustomCadFile;
   heroVideoFile?: HeroVideoFile;
   heroShowcaseMode?: HeroShowcaseMode;
+  sectionCopy?: Partial<SectionCopyConfig>;
 }

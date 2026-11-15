@@ -4,6 +4,7 @@ import type {
   CatalogProject,
   CertificationTrack,
   DigitalCertificate,
+  SectionCopyConfig,
 } from '../types';
 
 export const CATEGORY_LABELS: Record<CatalogCategory, string> = {
@@ -12,6 +13,25 @@ export const CATEGORY_LABELS: Record<CatalogCategory, string> = {
   planimetria: 'Planimetría & GD&T',
   ensambles: 'Ensambles & Cinemática',
   superficies: 'Chapa & Superficies',
+};
+
+export const DEFAULT_SECTION_COPY: SectionCopyConfig = {
+  navPortfolioLabel: 'Catálogo de Trabajos',
+  navCertificatesLabel: 'Certificados Oficiales',
+  navTrainingLabel: 'Capacitación CSWA / CSWP',
+  navContactLabel: 'Contacto Directo',
+  heroPrimaryCta: 'Inspeccionar Trabajo Destacado',
+  heroSecondaryCta: 'Ver Certificados',
+  certificatesBadge: 'Respaldo Profesional Verificado',
+  certificatesTitlePrefix: 'Certificaciones Oficiales',
+  certificatesTitleHighlight: 'SolidWorks',
+  certificatesSubtitle:
+    'Credenciales oficiales otorgadas por Dassault Systèmes que avalan la precisión técnica, dominio del modelado paramétrico y capacidad de formación profesional.',
+  trainingBadge: 'Academia & Mentoría CADCO',
+  trainingTitlePrefix: 'Capacitaciones SolidWorks',
+  trainingTitleHighlight: 'CSWA & CSWP',
+  trainingSubtitle:
+    'Entrenamiento práctico enfocado 100% en aprobar las certificaciones oficiales de Dassault Systèmes en el primer intento, con simulacros cronometrados y resolución de piezas reales.',
 };
 
 export const DEFAULT_BRAND_CONFIG: BrandConfig = {
@@ -28,6 +48,7 @@ export const DEFAULT_BRAND_CONFIG: BrandConfig = {
   contactEmail: 'cristian79orozco@gmail.com',
   whatsappNumber: '',
   adminPin: 'CADCO2026',
+  sectionCopy: DEFAULT_SECTION_COPY,
 };
 
 export const DEFAULT_DIGITAL_CERTIFICATES: DigitalCertificate[] = [

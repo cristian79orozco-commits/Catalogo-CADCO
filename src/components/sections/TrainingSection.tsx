@@ -1,5 +1,6 @@
 import React from 'react';
 import { Award, CheckCircle2, Clock, FileCheck2, GraduationCap, MessageCircle } from 'lucide-react';
+import { DEFAULT_SECTION_COPY } from '../../data/catalogData';
 import { useCatalogStore } from '../../store/useCatalogStore';
 import { buildTrainingQuoteMessage, buildWhatsAppUrl } from '../../utils/whatsapp';
 
@@ -7,6 +8,8 @@ export const TrainingSection: React.FC = () => {
   const trainingTracks = useCatalogStore((s) => s.trainingTracks);
   const brandName = useCatalogStore((s) => s.brandConfig.brandName);
   const whatsappNumber = useCatalogStore((s) => s.brandConfig.whatsappNumber);
+  const rawSectionCopy = useCatalogStore((s) => s.brandConfig.sectionCopy);
+  const sectionCopy = { ...DEFAULT_SECTION_COPY, ...(rawSectionCopy ?? {}) };
 
   return (
     <section id="capacitacion" className="py-2 sm:py-4">
@@ -14,14 +17,14 @@ export const TrainingSection: React.FC = () => {
         <div className="max-w-2xl">
           <div className="cadco-badge px-3 py-1 text-xs font-medium">
             <GraduationCap className="h-3.5 w-3.5" />
-            <span>Academia & Mentoría CADCO</span>
+            <span>{sectionCopy.trainingBadge}</span>
           </div>
           <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            Capacitaciones SolidWorks{' '}
-            <span className="text-[#5bb5b9]">CSWA & CSWP</span>
+            {sectionCopy.trainingTitlePrefix}{' '}
+            <span className="text-[#5bb5b9]">{sectionCopy.trainingTitleHighlight}</span>
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-slate-300 sm:text-base">
-            Entrenamiento práctico enfocado 100% en aprobar las certificaciones oficiales de Dassault Systèmes en el primer intento, con simulacros cronometrados y resolución de piezas reales.
+            {sectionCopy.trainingSubtitle}
           </p>
         </div>
 

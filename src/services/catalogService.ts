@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { DEFAULT_BRAND_CONFIG } from '../data/catalogData';
+import { DEFAULT_BRAND_CONFIG, DEFAULT_SECTION_COPY } from '../data/catalogData';
 import { uploadMediaToSupabaseStorage } from './storageService';
 import type {
   BrandConfig,
@@ -9,6 +9,7 @@ import type {
   DigitalCertificate,
   HeroShowcaseMode,
   HeroVideoFile,
+  SectionCopyConfig,
 } from '../types';
 
 export interface RemoteCatalogSnapshot {
@@ -76,6 +77,7 @@ interface BrandConfigRow {
   hero_cad_file?: CustomCadFile | null;
   hero_video_file?: HeroVideoFile | null;
   hero_showcase_mode?: HeroShowcaseMode | null;
+  section_copy?: Partial<SectionCopyConfig> | null;
 }
 
 function mapProjectToRow(project: CatalogProject, sortOrder = 0): ProjectRow {
@@ -188,6 +190,10 @@ function mapBrandToRow(config: BrandConfig): BrandConfigRow {
     hero_cad_file: config.heroCadFile ?? null,
     hero_video_file: config.heroVideoFile ?? null,
     hero_showcase_mode: config.heroShowcaseMode ?? 'auto',
+    section_copy: {
+      ...DEFAULT_SECTION_COPY,
+      ...(config.sectionCopy ?? {}),
+    },
   };
 }
 
@@ -207,6 +213,10 @@ function mapRowToBrand(row: BrandConfigRow): BrandConfig {
     ...(row.hero_cad_file ? { heroCadFile: row.hero_cad_file } : {}),
     ...(row.hero_video_file ? { heroVideoFile: row.hero_video_file } : {}),
     heroShowcaseMode: row.hero_showcase_mode ?? 'auto',
+    sectionCopy: {
+      ...DEFAULT_SECTION_COPY,
+      ...(row.section_copy ?? {}),
+    },
   };
 }
 
@@ -351,13 +361,27 @@ export async function upsertTrainingTrackInSupabase(track: CertificationTrack) {
   if (error) throw error;
 }
 
+async function upsertBrandRowSafe(row: BrandConfigRow & { updated_at: string }) {
+  if (!supabase) return;
+  const { error } = await supabase.from('brand_config').upsert(row);
+  if (!error) return;
+
+  // Fallback si la columna section_copy aún no ha sido agregada en la instancia remota de Supabase
+  const msg = String(error.message ?? '').toLowerCase();
+  if (error.code === '42703' || error.code === 'PGRST204' || msg.includes('section_copy')) {
+    const { section_copy: _omit, ...legacyRow } = row;
+    const { error: retryError } = await supabase.from('brand_config').upsert(legacyRow);
+    if (retryError) throw retryError;
+    return;
+  }
+
+  throw error;
+}
+
 export async function upsertBrandConfigInSupabase(config: BrandConfig) {
   if (!supabase) return;
   const normalized = await resolveBrandStorageMedia(config);
-  const { error } = await supabase
-    .from('brand_config')
-    .upsert({ ...mapBrandToRow(normalized), updated_at: new Date().toISOString() });
-  if (error) throw error;
+  await upsertBrandRowSafe({ ...mapBrandToRow(normalized), updated_at: new Date().toISOString() });
 }
 
 export async function seedSnapshotToSupabase(snapshot: {
@@ -402,10 +426,7 @@ export async function seedSnapshotToSupabase(snapshot: {
   }
 
   const resolvedBrand = await resolveBrandStorageMedia(snapshot.brandConfig);
-  const { error: brandError } = await supabase
-    .from('brand_config')
-    .upsert({ ...mapBrandToRow(resolvedBrand), updated_at: now });
-  if (brandError) throw brandError;
+  await upsertBrandRowSafe({ ...mapBrandToRow(resolvedBrand), updated_at: now });
 }
 
 export async function signInAdminWithSupabase(
