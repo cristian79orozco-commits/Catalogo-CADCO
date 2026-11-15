@@ -962,7 +962,7 @@ export const AdminStudioModal: React.FC = () => {
                               ['tolerancia', 'Tolerancia'],
                               ['software', 'Software CAD'],
                               ['norma', 'Normativa'],
-                              ['proceso', 'Proceso Manufactura'],
+                              ['proceso', 'Proceso de Manufactura'],
                               ['tiempoEntrega', 'Tiempo de Entrega'],
                             ] as const
                           ).map(([key, label]) => (

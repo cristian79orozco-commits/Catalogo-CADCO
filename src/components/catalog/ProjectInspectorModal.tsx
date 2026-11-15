@@ -317,25 +317,27 @@ export const ProjectInspectorModal: React.FC<ProjectInspectorModalProps> = ({ pr
                 </h4>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {[
-                    ['Material Referencia', project.specs.material],
-                    ['Tolerancias / Ajuste', project.specs.tolerancia],
+                    ['Material', project.specs.material],
+                    ['Tolerancia', project.specs.tolerancia],
                     ['Software CAD', project.specs.software],
                     ['Normativa', project.specs.norma],
-                    ['Enfoque Técnico', project.specs.proceso],
-                    ['Complejidad', project.specs.tiempoEntrega],
-                  ].map(([label, val]) => (
-                    <div
-                      key={label}
-                      className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2"
-                    >
-                      <div className="text-[10px] font-medium tracking-wide text-slate-400 uppercase">
-                        {label}
+                    ['Proceso de Manufactura', project.specs.proceso],
+                    ['Tiempo de Entrega', project.specs.tiempoEntrega],
+                  ]
+                    .filter(([, val]) => Boolean(val?.trim()))
+                    .map(([label, val]) => (
+                      <div
+                        key={label}
+                        className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2"
+                      >
+                        <div className="text-[10px] font-medium tracking-wide text-slate-400 uppercase">
+                          {label}
+                        </div>
+                        <div className="mt-0.5 font-mono-tech text-xs font-medium text-slate-100">
+                          {val}
+                        </div>
                       </div>
-                      <div className="mt-0.5 font-mono-tech text-xs font-medium text-slate-100">
-                        {val}
-                      </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </div>
 
