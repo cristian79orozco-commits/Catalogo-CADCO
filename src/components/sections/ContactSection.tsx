@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Check, Copy, Mail, MessageCircle, Send } from 'lucide-react';
 import { useCatalogStore } from '../../store/useCatalogStore';
+import { buildGeneralQuoteMessage, buildWhatsAppUrl } from '../../utils/whatsapp';
 
 export const ContactSection: React.FC = () => {
   const brandConfig = useCatalogStore((s) => s.brandConfig);
@@ -21,12 +22,16 @@ export const ContactSection: React.FC = () => {
     setTimeout(() => setCopiedBrief(false), 3000);
   };
 
-  const whatsappDigits = brandConfig.whatsappNumber.replace(/\D/g, '');
-  const whatsappUrl = whatsappDigits
-    ? `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(
-        `Hola ${brandConfig.brandName}, soy ${name || 'un cliente interesado'}. Me interesa: ${service}. ${message}`
-      )}`
-    : null;
+  const quoteMessage = buildGeneralQuoteMessage(brandConfig.brandName, {
+    name,
+    service,
+    detail: message,
+  });
+  const whatsappUrl = buildWhatsAppUrl(brandConfig.whatsappNumber, quoteMessage);
+  const directWhatsappUrl = buildWhatsAppUrl(
+    brandConfig.whatsappNumber,
+    buildGeneralQuoteMessage(brandConfig.brandName)
+  );
 
   return (
     <section id="contacto" className="py-2 sm:py-4">
@@ -49,9 +54,9 @@ export const ContactSection: React.FC = () => {
               <Mail className="h-4 w-4 text-[#5bb5b9]" />
               <span>{brandConfig.contactEmail}</span>
             </div>
-            {whatsappUrl && (
+            {directWhatsappUrl && (
               <a
-                href={whatsappUrl}
+                href={directWhatsappUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/20"
@@ -112,9 +117,24 @@ export const ContactSection: React.FC = () => {
           </div>
 
           <div className="mt-5 flex flex-wrap items-center gap-3">
+            {whatsappUrl && (
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="cadco-btn-primary px-5 py-2.5 text-sm"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Enviar Cotización por WhatsApp
+              </a>
+            )}
             <button
               type="submit"
-              className="cadco-btn-primary px-5 py-2.5 text-sm"
+              className={
+                whatsappUrl
+                  ? 'inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-medium text-white transition hover:border-[#5bb5b9]/60'
+                  : 'cadco-btn-primary px-5 py-2.5 text-sm'
+              }
             >
               {copiedBrief ? (
                 <>

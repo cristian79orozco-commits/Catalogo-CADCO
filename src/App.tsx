@@ -23,6 +23,7 @@ import { HeroVideoShowcase } from './components/viewers/HeroVideoShowcase';
 import { CertificatesSection } from './components/sections/CertificatesSection';
 import { TrainingSection } from './components/sections/TrainingSection';
 import { ContactSection } from './components/sections/ContactSection';
+import { WhatsAppFloatingButton } from './components/common/WhatsAppFloatingButton';
 
 const ProjectInspectorModal = React.lazy(() =>
   import('./components/catalog/ProjectInspectorModal').then((m) => ({
@@ -518,6 +519,7 @@ export function App() {
         )}
         <AdminStudioModal />
       </Suspense>
+      <WhatsAppFloatingButton />
       <Toaster
         position="bottom-right"
         theme="dark"

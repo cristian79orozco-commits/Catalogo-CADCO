@@ -26,6 +26,7 @@ import {
   Lock,
   LogOut,
   Mail,
+  MessageCircle,
   Pencil,
   RotateCcw,
   Save,
@@ -42,6 +43,11 @@ import { useCatalogStore } from '../../store/useCatalogStore';
 import { convertImageToWebp } from '../../utils/imageConverter';
 import { optimizeCadFile } from '../../utils/cadOptimizer';
 import { optimizeVideoForHero } from '../../utils/videoOptimizer';
+import {
+  buildWhatsAppUrl,
+  formatWhatsAppDisplay,
+  normalizeWhatsAppNumber,
+} from '../../utils/whatsapp';
 import { HeroVideoShowcase } from '../viewers/HeroVideoShowcase';
 import type {
   BrandConfig,
@@ -1885,7 +1891,7 @@ export const AdminStudioModal: React.FC = () => {
                           </div>
                           <div>
                             <label className="mb-1.5 block text-xs text-slate-400">
-                              WhatsApp (ej. 573001234567)
+                              WhatsApp (Colombia: 3001234567 o +57 3001234567)
                             </label>
                             <input
                               value={draftBrand.whatsappNumber}
@@ -1893,9 +1899,39 @@ export const AdminStudioModal: React.FC = () => {
                                 setDraftBrand({ ...draftBrand, whatsappNumber: e.target.value });
                                 setIsBrandDirty(true);
                               }}
-                              placeholder="Código de país + número sin +"
+                              placeholder="300 123 4567 o 573001234567"
                               className="cadco-input w-full px-3 py-2 font-mono-tech text-sm"
                             />
+                            {draftBrand.whatsappNumber.trim() && (() => {
+                              const normalized = normalizeWhatsAppNumber(draftBrand.whatsappNumber);
+                              const testUrl = buildWhatsAppUrl(
+                                draftBrand.whatsappNumber,
+                                `Hola ${draftBrand.brandName}, prueba de enlace WhatsApp desde el panel Admin.`
+                              );
+                              if (!normalized || !testUrl) {
+                                return (
+                                  <p className="mt-1.5 text-[11px] text-amber-300">
+                                    Número incompleto: ingresa al menos 10 dígitos (se agregará +57 automáticamente para celulares de Colombia).
+                                  </p>
+                                );
+                              }
+                              return (
+                                <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                                  <span className="font-mono-tech text-emerald-300">
+                                    Internacional activo: {formatWhatsAppDisplay(draftBrand.whatsappNumber)}
+                                  </span>
+                                  <a
+                                    href={testUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center gap-1 rounded-md border border-[#5bb5b9]/40 bg-[#5bb5b9]/10 px-2 py-0.5 font-medium text-[#5bb5b9] transition hover:bg-[#5bb5b9]/20"
+                                  >
+                                    <MessageCircle className="h-3 w-3" />
+                                    Probar enlace
+                                  </a>
+                                </div>
+                              );
+                            })()}
                           </div>
                           {!isSupabaseConfigured && (
                             <div>

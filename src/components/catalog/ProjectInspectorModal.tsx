@@ -9,6 +9,7 @@ import {
   Image as ImageIcon,
   Layers,
   Link2,
+  MessageCircle,
   MessageSquare,
   RotateCw,
   Share2,
@@ -17,6 +18,7 @@ import {
 } from 'lucide-react';
 import type { CatalogProject } from '../../types';
 import { useCatalogStore } from '../../store/useCatalogStore';
+import { buildProjectQuoteMessage, buildWhatsAppUrl } from '../../utils/whatsapp';
 import { R3FCadViewer } from '../viewers/R3FCadViewer';
 import { CustomCadFileViewer } from '../viewers/CustomCadFileViewer';
 import { ZoomableTechnicalStage } from '../gallery/ZoomableTechnicalStage';
@@ -38,6 +40,17 @@ export const ProjectInspectorModal: React.FC<ProjectInspectorModalProps> = ({ pr
   const copiedProjectId = useCatalogStore((s) => s.copiedProjectId);
   const markLinkCopied = useCatalogStore((s) => s.markLinkCopied);
   const setActiveView = useCatalogStore((s) => s.setActiveView);
+  const brandName = useCatalogStore((s) => s.brandConfig.brandName);
+  const whatsappNumber = useCatalogStore((s) => s.brandConfig.whatsappNumber);
+
+  const projectShareUrl =
+    typeof window !== 'undefined'
+      ? `${window.location.origin}${window.location.pathname}?project=${encodeURIComponent(project.code)}`
+      : undefined;
+  const projectWhatsappUrl = buildWhatsAppUrl(
+    whatsappNumber,
+    buildProjectQuoteMessage(brandName, project, projectShareUrl)
+  );
 
   const [viewMode, setViewMode] = useState<'3d' | 'photos'>(
     activePhotoIndex > 0 ? 'photos' : '3d'
@@ -361,13 +374,28 @@ export const ProjectInspectorModal: React.FC<ProjectInspectorModalProps> = ({ pr
             </div>
 
             <div className="mt-6 flex flex-wrap gap-2.5 border-t border-white/10 pt-4">
+              {projectWhatsappUrl && (
+                <a
+                  href={projectWhatsappUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#5bb5b9] px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-[#4ea5a9]"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  Cotizar por WhatsApp
+                </a>
+              )}
               <button
                 type="button"
                 onClick={() => {
                   setActiveView('contact');
                   onClose();
                 }}
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#5bb5b9] px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-[#4ea5a9]"
+                className={
+                  projectWhatsappUrl
+                    ? 'inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:border-[#5bb5b9]/50'
+                    : 'inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#5bb5b9] px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-[#4ea5a9]'
+                }
               >
                 <MessageSquare className="h-4 w-4" />
                 Consultar Proyecto Similar

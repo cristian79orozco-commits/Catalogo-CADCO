@@ -1,9 +1,12 @@
 import React from 'react';
-import { Award, CheckCircle2, Clock, FileCheck2, GraduationCap } from 'lucide-react';
+import { Award, CheckCircle2, Clock, FileCheck2, GraduationCap, MessageCircle } from 'lucide-react';
 import { useCatalogStore } from '../../store/useCatalogStore';
+import { buildTrainingQuoteMessage, buildWhatsAppUrl } from '../../utils/whatsapp';
 
 export const TrainingSection: React.FC = () => {
   const trainingTracks = useCatalogStore((s) => s.trainingTracks);
+  const brandName = useCatalogStore((s) => s.brandConfig.brandName);
+  const whatsappNumber = useCatalogStore((s) => s.brandConfig.whatsappNumber);
 
   return (
     <section id="capacitacion" className="py-2 sm:py-4">
@@ -81,12 +84,29 @@ export const TrainingSection: React.FC = () => {
                 </div>
               </div>
 
-              <div className="mt-7">
+              <div className="mt-7 flex flex-col gap-2.5 sm:flex-row">
+                {(() => {
+                  const trackWhatsappUrl = buildWhatsAppUrl(
+                    whatsappNumber,
+                    buildTrainingQuoteMessage(brandName, track)
+                  );
+                  return trackWhatsappUrl ? (
+                    <a
+                      href={trackWhatsappUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#5bb5b9] px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#4ea5a9]"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      Consultar Cupo por WhatsApp
+                    </a>
+                  ) : null;
+                })()}
                 <a
                   href="#contacto"
-                  className="inline-flex w-full items-center justify-center rounded-xl border border-[#5bb5b9]/50 bg-[#5bb5b9]/10 px-4 py-3 text-sm font-semibold text-[#5bb5b9] transition hover:bg-[#5bb5b9] hover:text-slate-950"
+                  className="inline-flex flex-1 items-center justify-center rounded-xl border border-[#5bb5b9]/50 bg-[#5bb5b9]/10 px-4 py-3 text-sm font-semibold text-[#5bb5b9] transition hover:bg-[#5bb5b9] hover:text-slate-950"
                 >
-                  Reservar Cupo / Solicitar Temario {track.code}
+                  Solicitar Temario {track.code}
                 </a>
               </div>
             </div>
