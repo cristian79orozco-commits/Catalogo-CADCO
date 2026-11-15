@@ -339,21 +339,23 @@ export const ProjectInspectorModal: React.FC<ProjectInspectorModalProps> = ({ pr
                 </div>
               </div>
 
-              <div>
-                <h4 className="mb-2 text-xs font-semibold tracking-wider text-[#5bb5b9] uppercase">
-                  Especialidades Aplicadas
-                </h4>
-                <div className="flex flex-wrap gap-1.5">
-                  {project.solidworksModules.map((mod) => (
-                    <span
-                      key={mod}
-                      className="rounded-md border border-[#5bb5b9]/30 bg-[#5bb5b9]/10 px-2.5 py-1 font-mono-tech text-[11px] text-[#5bb5b9]"
-                    >
-                      {mod}
-                    </span>
-                  ))}
+              {project.solidworksModules.length > 0 && (
+                <div>
+                  <h4 className="mb-2 text-xs font-semibold tracking-wider text-[#5bb5b9] uppercase">
+                    Especialidades Aplicadas
+                  </h4>
+                  <div className="flex flex-wrap gap-1.5">
+                    {project.solidworksModules.map((mod) => (
+                      <span
+                        key={mod}
+                        className="rounded-md border border-[#5bb5b9]/30 bg-[#5bb5b9]/10 px-2.5 py-1 font-mono-tech text-[11px] text-[#5bb5b9]"
+                      >
+                        {mod}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             <div className="mt-6 flex flex-wrap gap-2.5 border-t border-white/10 pt-4">

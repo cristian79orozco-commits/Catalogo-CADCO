@@ -39,7 +39,8 @@ import {
 } from 'lucide-react';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { useCatalogStore } from '../../store/useCatalogStore';
-import { convertImageToWebp, readFileAsDataUrl } from '../../utils/imageConverter';
+import { convertImageToWebp } from '../../utils/imageConverter';
+import { optimizeCadFile } from '../../utils/cadOptimizer';
 import { optimizeVideoForHero } from '../../utils/videoOptimizer';
 import { HeroVideoShowcase } from '../viewers/HeroVideoShowcase';
 import type {
@@ -92,8 +93,8 @@ function createEmptyProject(): CatalogProject {
       proceso: 'Mecanizado CNC',
       tiempoEntrega: '3 días hábiles',
     },
-    solidworksModules: ['Modelado 3D', 'Planimetría GD&T'],
-    tags: ['SolidWorks', 'CAD'],
+    solidworksModules: [],
+    tags: [],
     photos: [],
   };
 }
@@ -152,6 +153,7 @@ export const AdminStudioModal: React.FC = () => {
   const [draftTracks, setDraftTracks] = useState<CertificationTrack[]>(trainingTracks);
   const [isBrandDirty, setIsBrandDirty] = useState(false);
   const [videoProgress, setVideoProgress] = useState<number | null>(null);
+  const [newSkillInput, setNewSkillInput] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [conversionStatus, setConversionStatus] = useState<string | null>(null);
@@ -179,6 +181,7 @@ export const AdminStudioModal: React.FC = () => {
   }, [projects, projectFilter]);
 
   const notifySuccess = (msg: string) => {
+    setSaveError(null);
     toast.success(msg);
   };
 
@@ -231,15 +234,28 @@ export const AdminStudioModal: React.FC = () => {
     }
   };
 
-  const MAX_CAD_FILE_BYTES = 15 * 1024 * 1024;
-
   const processCadFileUpload = async (file: File): Promise<CustomCadFile | null> => {
-    if (file.size > MAX_CAD_FILE_BYTES) {
-      notifyError('El archivo 3D supera el límite de 15 MB. Optimízalo o exporta en .GLB / .STL.');
+    setSaveError(null);
+    try {
+      const optimized = await optimizeCadFile(file);
+      if (optimized.savingsPercent > 0) {
+        setConversionStatus(
+          `${optimized.methodLabel} (${optimized.name}): ${optimized.originalSizeKb}KB → ${optimized.optimizedSizeKb}KB (-${optimized.savingsPercent}%)`
+        );
+      } else {
+        setConversionStatus(
+          `Modelo 3D listo (${optimized.name}): ${optimized.optimizedSizeKb}KB`
+        );
+      }
+      return { name: optimized.name, dataUrl: optimized.dataUrl };
+    } catch (err) {
+      notifyError(
+        err instanceof Error
+          ? err.message
+          : 'El archivo 3D supera el límite de 50 MB o no se pudo procesar.'
+      );
       return null;
     }
-    const dataUrl = await readFileAsDataUrl(file);
-    return { name: file.name, dataUrl };
   };
 
   const handleProjectCadUpload = async (file: File | undefined) => {
@@ -967,6 +983,104 @@ export const AdminStudioModal: React.FC = () => {
                         </div>
                       </section>
 
+                      {/* Applied Skills & Specialties Editor */}
+                      <section className="space-y-3 rounded-2xl border border-white/10 bg-[#0b0e13]/95 p-4 sm:p-5">
+                        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                          <div>
+                            <h4 className="font-display text-sm font-bold text-white">
+                              Habilidades y Especialidades Aplicadas
+                            </h4>
+                            <p className="text-xs text-slate-400">
+                              Agrega o elimina libremente las habilidades técnicas reales aplicadas en este proyecto.
+                            </p>
+                          </div>
+                          {editingProject.solidworksModules.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setEditingProject({ ...editingProject, solidworksModules: [] })
+                              }
+                              className="w-fit text-xs text-rose-400 hover:underline"
+                            >
+                              Limpiar todas
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                          <input
+                            type="text"
+                            value={newSkillInput}
+                            onChange={(e) => setNewSkillInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                const trimmed = newSkillInput.trim();
+                                if (!trimmed) return;
+                                if (!editingProject.solidworksModules.includes(trimmed)) {
+                                  setEditingProject({
+                                    ...editingProject,
+                                    solidworksModules: [...editingProject.solidworksModules, trimmed],
+                                  });
+                                }
+                                setNewSkillInput('');
+                              }
+                            }}
+                            placeholder="Ej. Chapa Metálica, Soldadura, Planos ASME Y14.5, Ensambles..."
+                            className="cadco-input min-h-[40px] flex-1 px-3 py-2 text-xs"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const trimmed = newSkillInput.trim();
+                              if (!trimmed) return;
+                              if (!editingProject.solidworksModules.includes(trimmed)) {
+                                setEditingProject({
+                                  ...editingProject,
+                                  solidworksModules: [...editingProject.solidworksModules, trimmed],
+                                });
+                              }
+                              setNewSkillInput('');
+                            }}
+                            className="cadco-btn-primary min-h-[40px] shrink-0 px-4 py-2 text-xs"
+                          >
+                            Agregar Habilidad
+                          </button>
+                        </div>
+
+                        {editingProject.solidworksModules.length > 0 ? (
+                          <div className="flex flex-wrap gap-2 pt-1">
+                            {editingProject.solidworksModules.map((skill) => (
+                              <span
+                                key={skill}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-[#5bb5b9]/35 bg-[#5bb5b9]/10 px-2.5 py-1 font-mono-tech text-[11px] text-[#5bb5b9]"
+                              >
+                                {skill}
+                                <button
+                                  type="button"
+                                  aria-label={`Quitar ${skill}`}
+                                  onClick={() =>
+                                    setEditingProject({
+                                      ...editingProject,
+                                      solidworksModules: editingProject.solidworksModules.filter(
+                                        (m) => m !== skill
+                                      ),
+                                    })
+                                  }
+                                  className="rounded p-0.5 text-[#5bb5b9]/80 transition hover:bg-[#5bb5b9]/20 hover:text-white"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="font-mono-tech text-[11px] text-slate-500">
+                            Sin habilidades asignadas. Agrega las que correspondan a este trabajo.
+                          </p>
+                        )}
+                      </section>
+
                       {/* 3D Model Attachment */}
                       <section className="rounded-2xl border border-[#5bb5b9]/30 bg-[#0b0e13]/95 p-4 sm:p-5">
                         <h4 className="flex items-center gap-2 font-display text-sm font-bold text-white">
@@ -998,7 +1112,7 @@ export const AdminStudioModal: React.FC = () => {
 
                           <div>
                             <label className="mb-1.5 block text-xs text-slate-400">
-                              Subir Archivo CAD Propio (.STEP, .STL, .OBJ, .GLB)
+                              Subir Archivo CAD Propio (.STEP, .STL, .OBJ, .GLB · máx. 50 MB)
                             </label>
                             <div className="flex flex-wrap items-center gap-2">
                               <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-[#5bb5b9]/40 bg-[#5bb5b9]/10 px-3.5 py-2 text-xs font-medium text-[#5bb5b9] transition hover:bg-[#5bb5b9]/20">
@@ -1010,7 +1124,10 @@ export const AdminStudioModal: React.FC = () => {
                                   type="file"
                                   accept=".stp,.step,.igs,.iges,.stl,.obj,.3ds,.gltf,.glb"
                                   className="hidden"
-                                  onChange={(e) => handleProjectCadUpload(e.target.files?.[0])}
+                                  onChange={(e) => {
+                                    void handleProjectCadUpload(e.target.files?.[0]);
+                                    e.target.value = '';
+                                  }}
                                 />
                               </label>
                               {editingProject.customCadFile && (
