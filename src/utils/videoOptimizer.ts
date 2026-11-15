@@ -13,14 +13,16 @@ export interface OptimizedVideoResult {
 }
 
 const MAX_INPUT_BYTES = 100 * 1024 * 1024; // 100 MB raw input limit
-const MAX_DIMENSION = 1280; // 720p HD max width/height for fast web playback
+const MAX_DIMENSION = 960; // Optimal 540p/qHD+ sharpness for Hero showcase with fast decoding
 
 function pickBestVideoMimeType(): { mimeType: string; extension: string } | null {
   if (typeof MediaRecorder === 'undefined') return null;
 
+  // Prefer hardware-accelerated H.264 MP4 or fast-encoding VP8 WebM to prevent frame drops
   const candidates = [
-    { mimeType: 'video/webm;codecs=vp9', extension: 'webm' },
+    { mimeType: 'video/mp4;codecs=avc1.42E01E', extension: 'mp4' },
     { mimeType: 'video/webm;codecs=vp8', extension: 'webm' },
+    { mimeType: 'video/webm;codecs=vp9', extension: 'webm' },
     { mimeType: 'video/webm', extension: 'webm' },
     { mimeType: 'video/mp4', extension: 'mp4' },
   ];
@@ -43,8 +45,8 @@ function blobToDataUrl(blob: Blob): Promise<string> {
 }
 
 function getScaledDimensions(srcWidth: number, srcHeight: number) {
-  let width = srcWidth || 1280;
-  let height = srcHeight || 720;
+  let width = srcWidth || 960;
+  let height = srcHeight || 540;
 
   if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
     if (width >= height) {
@@ -56,7 +58,7 @@ function getScaledDimensions(srcWidth: number, srcHeight: number) {
     }
   }
 
-  // Ensure even dimensions required by most video codecs
+  // Ensure even dimensions required by video codecs
   width = Math.max(2, width - (width % 2));
   height = Math.max(2, height - (height % 2));
   return { width, height };
@@ -64,8 +66,8 @@ function getScaledDimensions(srcWidth: number, srcHeight: number) {
 
 /**
  * Accepts any standard video format (MP4, MOV, AVI, MKV, WebM, etc.) and
- * transcodes/compresses it in-browser to an optimized WebM (VP9/VP8) stream
- * for fast loading, smooth playback, and minimal database/storage footprint.
+ * transcodes/compresses it in-browser with frame-synced capture for smooth
+ * 30fps playback, fast GPU decoding, and minimal database/storage footprint.
  */
 export async function optimizeVideoForHero(
   file: File,
@@ -95,16 +97,26 @@ export async function optimizeVideoForHero(
     const { width, height } = getScaledDimensions(video.videoWidth, video.videoHeight);
     const chosen = pickBestVideoMimeType();
 
-    // Fallback when MediaRecorder is unsupported (keep original if already web-ready)
-    if (!chosen || typeof HTMLCanvasElement.prototype.captureStream !== 'function') {
+    // If the file is already a compact web-native MP4/WebM (<= 4 MB & <= 960px), keep it lossless & instant
+    const isAlreadyOptimal =
+      (file.type === 'video/mp4' || file.type === 'video/webm') &&
+      file.size <= 4 * 1024 * 1024 &&
+      video.videoWidth <= MAX_DIMENSION &&
+      video.videoHeight <= MAX_DIMENSION;
+
+    if (
+      isAlreadyOptimal ||
+      !chosen ||
+      typeof HTMLCanvasElement.prototype.captureStream !== 'function'
+    ) {
       const dataUrl = await readFileAsDataUrl(file);
       onProgress?.(100);
       return {
         name: file.name,
         mimeType: file.type || 'video/mp4',
         dataUrl,
-        width,
-        height,
+        width: video.videoWidth || width,
+        height: video.videoHeight || height,
         durationSec: Math.round(durationSec * 10) / 10,
         originalSizeKb,
         optimizedSizeKb: originalSizeKb,
@@ -115,13 +127,12 @@ export async function optimizeVideoForHero(
     const canvas = document.createElement('canvas');
     canvas.width = width;
     canvas.height = height;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
     if (!ctx) {
       throw new Error('No se pudo inicializar el lienzo de conversión de video.');
     }
 
-    // Target adaptive bitrate (~1.2 Mbps for short clips, ~900 kbps for longer clips)
-    const targetBitrate = durationSec > 20 ? 900_000 : 1_250_000;
+    const targetBitrate = durationSec > 20 ? 850_000 : 1_150_000;
     const stream = canvas.captureStream(30);
     const recorder = new MediaRecorder(stream, {
       mimeType: chosen.mimeType,
@@ -141,21 +152,29 @@ export async function optimizeVideoForHero(
       };
     });
 
+    const videoWithRvfc = video as HTMLVideoElement & {
+      requestVideoFrameCallback?: (cb: () => void) => number;
+    };
+
     let rafId = 0;
-    const drawFrame = () => {
+    const renderFrame = () => {
       if (video.paused || video.ended) return;
       ctx.drawImage(video, 0, 0, width, height);
       if (durationSec > 0 && onProgress) {
         const pct = Math.min(98, Math.round((video.currentTime / durationSec) * 100));
         onProgress(pct);
       }
-      rafId = requestAnimationFrame(drawFrame);
+      if (typeof videoWithRvfc.requestVideoFrameCallback === 'function') {
+        videoWithRvfc.requestVideoFrameCallback(renderFrame);
+      } else {
+        rafId = requestAnimationFrame(renderFrame);
+      }
     };
 
     video.currentTime = 0;
-    recorder.start(250);
+    recorder.start(500);
     await video.play();
-    drawFrame();
+    renderFrame();
 
     await new Promise<void>((resolve) => {
       video.onended = () => resolve();
@@ -170,7 +189,6 @@ export async function optimizeVideoForHero(
     const optimizedBlob = await recordingFinished;
     onProgress?.(100);
 
-    // If original is already web-friendly (.mp4/.webm) and smaller, keep the smaller one
     const isAlreadyWebFormat =
       file.type === 'video/webm' || file.type === 'video/mp4';
     const useOriginal = isAlreadyWebFormat && file.size <= optimizedBlob.size;

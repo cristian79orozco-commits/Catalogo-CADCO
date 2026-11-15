@@ -1,15 +1,48 @@
-import React, { useRef, useState } from 'react';
-import { Maximize2, Pause, Play, Volume2, VolumeX } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Maximize2, Minimize2, Pause, Play, Volume2, VolumeX } from 'lucide-react';
 import type { HeroVideoFile } from '../../types';
 
 interface HeroVideoShowcaseProps {
   video: HeroVideoFile;
 }
 
+function dataUrlToBlobUrl(dataUrl: string): string {
+  if (!dataUrl.startsWith('data:')) return dataUrl;
+  const [header, base64] = dataUrl.split(',');
+  const mimeMatch = header.match(/:(.*?);/);
+  const mime = mimeMatch ? mimeMatch[1] : 'video/webm';
+  const binary = atob(base64 || '');
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return URL.createObjectURL(new Blob([bytes], { type: mime }));
+}
+
 export const HeroVideoShowcase: React.FC<HeroVideoShowcaseProps> = ({ video }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const blobUrl = useMemo(() => dataUrlToBlobUrl(video.dataUrl), [video.dataUrl]);
+
+  useEffect(() => {
+    return () => {
+      if (blobUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(blobUrl);
+      }
+    };
+  }, [blobUrl]);
+
+  useEffect(() => {
+    const onFsChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', onFsChange);
+    return () => document.removeEventListener('fullscreenchange', onFsChange);
+  }, []);
 
   const togglePlay = () => {
     const el = videoRef.current;
@@ -31,29 +64,47 @@ export const HeroVideoShowcase: React.FC<HeroVideoShowcaseProps> = ({ video }) =
   };
 
   const handleFullscreen = () => {
-    const el = videoRef.current;
-    if (!el) return;
-    if (el.requestFullscreen) {
-      void el.requestFullscreen();
+    if (document.fullscreenElement) {
+      void document.exitFullscreen();
+      return;
+    }
+    const wrapper = containerRef.current;
+    if (wrapper?.requestFullscreen) {
+      void wrapper.requestFullscreen();
     }
   };
 
   const formatLabel = video.mimeType.includes('webm') ? 'WEBM' : 'MP4';
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-[#070a0f]">
-      <video
-        ref={videoRef}
-        src={video.dataUrl}
-        autoPlay
-        loop
-        muted={isMuted}
-        playsInline
-        preload="auto"
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
-        className="h-full w-full object-contain"
-      />
+    <div
+      ref={containerRef}
+      onContextMenu={(e) => e.preventDefault()}
+      className="relative h-full w-full overflow-hidden bg-[#070a0f] select-none"
+    >
+      {blobUrl && (
+        <video
+          ref={videoRef}
+          src={blobUrl}
+          autoPlay
+          loop
+          muted={isMuted}
+          playsInline
+          preload="auto"
+          controls={false}
+          controlsList="nodownload noplaybackrate"
+          disablePictureInPicture
+          onContextMenu={(e) => e.preventDefault()}
+          onCanPlay={(e) => {
+            if (isPlaying && e.currentTarget.paused) {
+              void e.currentTarget.play().catch(() => {});
+            }
+          }}
+          onPlay={() => setIsPlaying(true)}
+          onPause={() => setIsPlaying(false)}
+          className="h-full w-full transform-gpu object-contain will-change-transform"
+        />
+      )}
 
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/70 to-transparent" />
 
@@ -81,10 +132,14 @@ export const HeroVideoShowcase: React.FC<HeroVideoShowcaseProps> = ({ video }) =
         <button
           type="button"
           onClick={handleFullscreen}
-          aria-label="Pantalla completa"
+          aria-label={isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
           className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/15 bg-black/75 text-slate-200 backdrop-blur-sm transition hover:border-[#5bb5b9] hover:text-[#5bb5b9]"
         >
-          <Maximize2 className="h-3.5 w-3.5" />
+          {isFullscreen ? (
+            <Minimize2 className="h-3.5 w-3.5" />
+          ) : (
+            <Maximize2 className="h-3.5 w-3.5" />
+          )}
         </button>
       </div>
     </div>
