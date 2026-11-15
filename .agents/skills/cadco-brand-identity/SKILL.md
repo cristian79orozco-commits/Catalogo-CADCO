@@ -127,7 +127,46 @@ Basada en la estructura activa en `src/App.tsx`:
 | **Certificaciones Oficiales (`CertificatesSection`)** | Alta | Prueba de autoridad técnica mediante credenciales verificables de SolidWorks (`CSWP`, `CSWA`). |
 | **Capacitación SolidWorks (`TrainingSection`)** | Media | Oferta formativa estructurada para preparación de certificaciones oficiales y dominio profesional del software. |
 | **Contacto Directo & Asesoría (`ContactSection`)** | Media | Conversión directa vía correo/WhatsApp para proyectos de ingeniería CAD, documentación técnica o mentoría. |
-| **Admin Studio (`AdminStudioModal`)** | Operativa | Gestión interna protegida por PIN (`brandConfig`) para administrar proyectos, certificados y configuración de marca sin tocar código. |
+| **Admin Studio (`AdminStudioModal`)** | Operativa | Gestión interna protegida por Supabase Auth / RLS (`brandConfig`, proyectos, certificados y rutas) sin tocar código. |
+
+---
+
+## 10. Reglas de Datos, Base de Datos Centralizada y Compatibilidad
+
+Todo desarrollo, rediseño o nueva funcionalidad en CADCO debe cumplir estrictamente estas reglas de arquitectura de datos:
+
+1. **Partir siempre de los datos existentes:**
+   - Reutilizar los contratos de `src/types/index.ts` y los valores base/respaldo de `src/data/catalogData.ts` (`CATALOG_PROJECTS`, `DEFAULT_DIGITAL_CERTIFICATES`, `CERTIFICATION_TRACKS`, `DEFAULT_BRAND_CONFIG`).
+   - No crear fuentes de datos paralelas ni hardcodear contenido en componentes UI cuando el dato ya exista o deba administrarse dinámicamente.
+
+2. **Vinculación centralizada con la base de datos (Supabase + Store):**
+   - Toda lectura, escritura y suscripción en tiempo real (`supabase_realtime`) debe pasar únicamente por la capa centralizada: `useCatalogStore` (`src/store/useCatalogStore.ts`) y `src/services/catalogService.ts` conectados a `src/lib/supabase.ts`.
+   - Respetar el esquema oficial en `supabase/schema.sql` (`catalog_projects`, `digital_certificates`, `training_tracks`, `brand_config`, `admin_users`) y su blindaje RLS (`is_cadco_admin()`).
+   - Prohibido realizar llamadas directas a `supabase.from(...)` desde componentes visuales o modales; los componentes solo consumen estado y acciones del store.
+
+3. **Sin romper lo ya realizado (Compatibilidad y Blindaje):**
+   - Cualquier extensión de UI o de esquema debe ser retrocompatible con los registros ya guardados en Supabase y con el snapshot local (`cadco_catalog_storage_v2`).
+   - Si se agregan propiedades nuevas, definir siempre valores por defecto seguros tanto en SQL (`DEFAULT`) como en los mappers de `catalogService.ts` y fallbacks en el store.
+   - No alterar ni eliminar flujos operativos existentes (`ProjectCard`, `ProjectInspectorModal`, `AdminStudioModal`, `CertificatesSection`, `TrainingSection`, `ContactSection`) al incorporar nuevas funciones.
+
+---
+
+## 11. Diseño Responsive Profesional y Librerías UI Oficiales (Cliente y Admin)
+
+Todo cambio, rediseño o nueva vista en **cualquier instancia** —tanto en el **entorno cliente** (catálogo, visor 3D, galería técnica, certificaciones, capacitación, contacto y modales de inspección) como en el **entorno administrador** (`AdminStudioModal`, formularios, tablas/listas de gestión y controles)— debe diseñarse con **arquitectura responsive mobile-first profesional** apoyada en las librerías UI modernas incluidas en `package.json`:
+
+| Librería (`package.json`) | Versión | Uso Obligatorio en UI |
+| :--- | :--- | :--- |
+| **`tailwindcss` / `@tailwindcss/vite`** | `^4.3.5` | Sistema de layout responsive (`sm:`, `md:`, `lg:`, `xl:`), grids adaptativos (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`), espaciados fluidos y tokens de diseño CADCO. |
+| **`@headlessui/react`** | `^2.2.10` | Primitivas accesibles para modales (`Dialog`), pestañas (`TabGroup`), menús (`Menu`), selectores (`Listbox`) y transiciones con soporte de teclado y lectores de pantalla en cliente y admin. |
+| **`framer-motion`** | `^14.14.0` | Microinteracciones, transiciones de layout y animaciones GPU (`transform` / `opacity`) fluidas a 60 FPS respetando `prefers-reduced-motion`. |
+| **`lucide-react`** | `^1.72.0` | Iconografía técnica vectorial uniforme con trazos consistentes y tamaños adaptativos. |
+| **`sonner`** | `^2.0.8` | Notificaciones toast no intrusivas para feedback de acciones en cliente y administrador. |
+
+### Estándares Responsive Obligatorios (Móvil, Tablet y Desktop)
+1. **Cero desbordamiento horizontal:** Toda vista, tabla o formulario (especialmente en `AdminStudioModal` y `ProjectInspectorModal`) debe adaptarse limpiamente desde `320px/375px` (móvil) hasta pantallas anchas (`1440px+`).
+2. **Modales y paneles adaptativos:** En móvil, los modales deben usar ancho completo con scroll interno contenido (`max-h-[90dvh] overflow-y-auto`), cabeceras/acciones fijas accesibles y áreas táctiles mínimas de `40px–44px` en botones e inputs.
+3. **Prioridad de stack:** Utilizar primero las librerías ya incluidas en `package.json` (`Tailwind CSS v4`, `Headless UI`, `Framer Motion`, `Lucide React`, `Sonner`). Si una nueva funcionalidad exige una librería UI/responsive adicional de primer nivel compatible con React 19, verificar que no rompa el bundle ni duplique capacidades existentes antes de agregarla.
 
 ---
 
@@ -137,3 +176,5 @@ Basada en la estructura activa en `src/App.tsx`:
 2. ¿Los títulos usan `Space Grotesk`, el cuerpo `Inter` y los códigos/especificaciones `.font-mono-tech` (`JetBrains Mono`)?
 3. ¿Los botones respetan las variantes **Primario** (`bg-[#5bb5b9] text-slate-950`) y **Secundario** (`border-white/20 hover:border-[#5bb5b9]`)?
 4. ¿Las cards mantienen `rounded-2xl border-white/10 bg-[#0b0e13]/90` con el hover glow Teal oficial?
+5. ¿Los datos provienen de `useCatalogStore` / `catalogService.ts` respetando `supabase/schema.sql`, con fallbacks seguros y sin romper funcionalidades existentes?
+6. ¿La interfaz (cliente y administrador) es 100% responsive y usa las librerías oficiales del proyecto (`Tailwind CSS v4`, `@headlessui/react`, `framer-motion`, `lucide-react`, `sonner`)?
