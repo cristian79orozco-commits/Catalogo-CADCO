@@ -4,6 +4,7 @@ import type {
   BrandConfig,
   CatalogProject,
   CertificationTrack,
+  CustomCadFile,
   DigitalCertificate,
 } from '../types';
 
@@ -69,6 +70,7 @@ interface BrandConfigRow {
   contact_subtitle: string;
   contact_email: string;
   whatsapp_number: string;
+  hero_cad_file?: CustomCadFile | null;
 }
 
 function mapProjectToRow(project: CatalogProject, sortOrder = 0): ProjectRow {
@@ -178,6 +180,7 @@ function mapBrandToRow(config: BrandConfig): BrandConfigRow {
     contact_subtitle: config.contactSubtitle,
     contact_email: config.contactEmail,
     whatsapp_number: config.whatsappNumber,
+    hero_cad_file: config.heroCadFile ?? null,
   };
 }
 
@@ -194,6 +197,7 @@ function mapRowToBrand(row: BrandConfigRow): BrandConfig {
     contactEmail: row.contact_email,
     whatsappNumber: row.whatsapp_number,
     adminPin: DEFAULT_BRAND_CONFIG.adminPin,
+    ...(row.hero_cad_file ? { heroCadFile: row.hero_cad_file } : {}),
   };
 }
 

@@ -200,8 +200,11 @@ CREATE TABLE IF NOT EXISTS public.brand_config (
   contact_subtitle text NOT NULL DEFAULT '',
   contact_email text NOT NULL DEFAULT '',
   whatsapp_number text NOT NULL DEFAULT '',
+  hero_cad_file jsonb,
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+ALTER TABLE public.brand_config ADD COLUMN IF NOT EXISTS hero_cad_file jsonb;
 
 ALTER TABLE public.brand_config ENABLE ROW LEVEL SECURITY;
 

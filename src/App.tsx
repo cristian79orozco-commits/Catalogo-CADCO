@@ -18,6 +18,7 @@ import { useCatalogStore, type CatalogViewTab } from './store/useCatalogStore';
 import type { CatalogCategory } from './types';
 import { ProjectCard } from './components/catalog/ProjectCard';
 import { R3FCadViewer } from './components/viewers/R3FCadViewer';
+import { CustomCadFileViewer } from './components/viewers/CustomCadFileViewer';
 import { CertificatesSection } from './components/sections/CertificatesSection';
 import { TrainingSection } from './components/sections/TrainingSection';
 import { ContactSection } from './components/sections/ContactSection';
@@ -361,15 +362,22 @@ export function App() {
 
                       {/* Live 3D Preview Stage */}
                       <div className="relative h-[280px] border-t border-white/10 bg-[#070a0f] sm:h-[320px] lg:col-span-6 lg:h-auto lg:min-h-[340px] lg:border-t-0 lg:border-l">
-                        <R3FCadViewer
-                          modelType={featuredProject.modelType}
-                          exploded={false}
-                          wireframe={false}
-                          autoRotate={true}
-                          compact={true}
-                        />
+                        {brandConfig.heroCadFile || featuredProject.customCadFile ? (
+                          <CustomCadFileViewer
+                            cadFile={(brandConfig.heroCadFile ?? featuredProject.customCadFile)!}
+                          />
+                        ) : (
+                          <R3FCadViewer
+                            modelType={featuredProject.modelType}
+                            exploded={false}
+                            wireframe={false}
+                            autoRotate={true}
+                            compact={true}
+                          />
+                        )}
                         <div className="pointer-events-none absolute top-3 left-3 rounded-lg border border-white/10 bg-black/75 px-2.5 py-1 font-mono-tech text-[10px] text-[#5bb5b9] backdrop-blur-sm">
-                          VISTA 3D INTERACTIVA · {featuredProject.code}
+                          VISTA 3D INTERACTIVA ·{' '}
+                          {brandConfig.heroCadFile ? 'MODELO PRINCIPAL' : featuredProject.code}
                         </div>
                       </div>
                     </div>

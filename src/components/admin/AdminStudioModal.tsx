@@ -45,6 +45,7 @@ import type {
   CatalogCategory,
   CatalogProject,
   CertificationTrack,
+  CustomCadFile,
   DigitalCertificate,
   GalleryPhoto,
 } from '../../types';
@@ -225,14 +226,38 @@ export const AdminStudioModal: React.FC = () => {
     }
   };
 
+  const MAX_CAD_FILE_BYTES = 15 * 1024 * 1024;
+
+  const processCadFileUpload = async (file: File): Promise<CustomCadFile | null> => {
+    if (file.size > MAX_CAD_FILE_BYTES) {
+      notifyError('El archivo 3D supera el límite de 15 MB. Optimízalo o exporta en .GLB / .STL.');
+      return null;
+    }
+    const dataUrl = await readFileAsDataUrl(file);
+    return { name: file.name, dataUrl };
+  };
+
   const handleProjectCadUpload = async (file: File | undefined) => {
     if (!file || !editingProject) return;
-    const dataUrl = await readFileAsDataUrl(file);
+    const cadFile = await processCadFileUpload(file);
+    if (!cadFile) return;
     setEditingProject({
       ...editingProject,
-      customCadFile: { name: file.name, dataUrl },
+      customCadFile: cadFile,
     });
     notifySuccess(`Archivo 3D "${file.name}" adjuntado al proyecto.`);
+  };
+
+  const handleHeroCadUpload = async (file: File | undefined) => {
+    if (!file) return;
+    const cadFile = await processCadFileUpload(file);
+    if (!cadFile) return;
+    setDraftBrand({
+      ...draftBrand,
+      heroCadFile: cadFile,
+    });
+    setIsBrandDirty(true);
+    notifySuccess(`Modelo 3D principal "${file.name}" cargado. Guarda los cambios para publicarlo en el Hero.`);
   };
 
   const handleCertImageUpload = async (file: File | undefined) => {
@@ -1479,6 +1504,57 @@ export const AdminStudioModal: React.FC = () => {
                             }}
                             className="cadco-input w-full px-3 py-2 text-sm leading-relaxed"
                           />
+                        </div>
+
+                        <div className="rounded-xl border border-[#5bb5b9]/25 bg-[#070a0f] p-4">
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="min-w-0 space-y-1">
+                              <div className="flex items-center gap-2">
+                                <Box className="h-4 w-4 shrink-0 text-[#5bb5b9]" />
+                                <h5 className="font-display text-xs font-bold uppercase tracking-wider text-white sm:text-sm">
+                                  Modelo 3D Principal del Hero
+                                </h5>
+                              </div>
+                              <p className="text-xs leading-relaxed text-slate-400">
+                                Sube un ensamble o pieza real (.STEP, .STL, .OBJ, .GLB, .IGES) para mostrar tu nivel de diseño directamente en la vitrina principal del catálogo.
+                              </p>
+                              <p className="font-mono-tech text-[11px] text-[#5bb5b9]">
+                                {draftBrand.heroCadFile
+                                  ? `Activo: ${draftBrand.heroCadFile.name}`
+                                  : 'Sin modelo propio · Se usará el archivo 3D del proyecto destacado o el mecanismo base.'}
+                              </p>
+                            </div>
+
+                            <div className="flex shrink-0 flex-wrap items-center gap-2">
+                              <label className="inline-flex min-h-[40px] cursor-pointer items-center gap-1.5 rounded-xl border border-[#5bb5b9]/40 bg-[#5bb5b9]/15 px-3.5 py-2 text-xs font-semibold text-[#5bb5b9] transition hover:bg-[#5bb5b9]/25">
+                                <Upload className="h-3.5 w-3.5" />
+                                {draftBrand.heroCadFile ? 'Cambiar Modelo 3D' : 'Subir Modelo 3D'}
+                                <input
+                                  type="file"
+                                  accept=".stp,.step,.igs,.iges,.stl,.obj,.3ds,.gltf,.glb"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    void handleHeroCadUpload(e.target.files?.[0]);
+                                    e.target.value = '';
+                                  }}
+                                />
+                              </label>
+                              {draftBrand.heroCadFile && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setDraftBrand({ ...draftBrand, heroCadFile: undefined });
+                                    setIsBrandDirty(true);
+                                    notifySuccess('Modelo 3D principal retirado. Guarda para aplicar.');
+                                  }}
+                                  className="inline-flex min-h-[40px] items-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-300 transition hover:bg-rose-500/20"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                  Quitar
+                                </button>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </section>
 

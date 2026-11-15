@@ -91,4 +91,5 @@ export interface BrandConfig {
   contactEmail: string;
   whatsappNumber: string;
   adminPin: string;
+  heroCadFile?: CustomCadFile;
 }
